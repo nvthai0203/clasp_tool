@@ -26,21 +26,83 @@ node node_modules/electron/install.js
 
 hoặc xóa `node_modules/electron` rồi `npm install electron --save-dev`.
 
-## Build & đóng gói Windows
+## Đóng gói thành app dùng trên laptop / PC (Windows)
+
+App được đóng gói bằng **electron-builder** thành bộ cài NSIS (`.exe`). Sau khi cài, mở như phần mềm bình thường — không cần chạy `npm run dev`.
+
+### Máy dùng để đóng gói (máy build)
+
+1. Cài [Node.js 18+](https://nodejs.org/) (có `npm`).
+2. Clone/mở repo, cài dependency:
 
 ```bash
-npm run build
+npm install
+```
+
+3. Đảm bảo binary Electron đã có (nếu lỗi `Electron failed to install correctly`, xem mục **Phát triển** ở trên).
+4. Chạy đóng gói:
+
+```bash
 npm run dist
 ```
 
-Installer NSIS nằm trong thư mục `release/`.
+Lệnh này sẽ:
+
+1. Build source (`electron-vite build`) → thư mục `out/`
+2. Đóng gói Windows x64 (NSIS) → thư mục `release/`
+
+### File nhận được
+
+Trong `release/` thường có:
+
+| File | Mục đích |
+| --- | --- |
+| `Clasp Tool Setup x.x.x.exe` | **Installer** — mang sang máy khác để cài |
+| Thư mục `win-unpacked/` | Bản chạy trực tiếp (portable-ish), không cần cài |
+
+Mang file **Setup `.exe`** (hoặc cả thư mục `win-unpacked`) sang laptop/PC cần dùng.
+
+### Cài trên laptop / PC đích
+
+1. Chạy `Clasp Tool Setup x.x.x.exe`.
+2. Chọn thư mục cài (NSIS cho phép đổi đường dẫn).
+3. Hoàn tất → mở **Clasp Tool** từ Start Menu / shortcut.
+4. **Bắt buộc trên máy đích:** cài clasp global (app gọi CLI `clasp` trên máy đó):
+
+```bash
+npm i -g @google/clasp
+```
+
+Cần có Node.js trên máy đích để cài clasp. Kiểm tra:
+
+```bash
+clasp --version
+```
+
+5. Mở Clasp Tool — badge góc trên phải hiện phiên bản clasp. Nếu thiếu, cài lại clasp rồi mở lại app.
+
+### Lưu ý khi dùng bản đóng gói
+
+- Clasp Tool **không nhúng** clasp bên trong; mỗi máy dùng app vẫn cần `clasp` trong PATH.
+- Lệnh **Mở Cursor** cần CLI `cursor` trên máy đó (Command Palette Cursor → *Shell Command: Install 'cursor' command in PATH*).
+- Windows Defender / SmartScreen có thể cảnh báo lần đầu với app chưa ký code — chọn *More info* → *Run anyway* nếu bạn tự build.
+- Hiện cấu hình chỉ build **Windows x64**. Đóng gói trên máy Windows để có installer Windows.
+
+### Chỉ build không đóng gói
+
+Nếu chỉ muốn kiểm tra bản production local (không tạo installer):
+
+```bash
+npm run build
+npm run preview
+```
 
 ## Cách dùng
 
 ### 1. Chuẩn bị lần đầu
 
 1. Cài clasp global (xem mục **Yêu cầu**).
-2. Chạy app: `npm run dev` (dev) hoặc mở bản đã cài từ `release/`.
+2. Chạy app: `npm run dev` (dev) hoặc mở **Clasp Tool** đã cài từ installer trong `release/`.
 3. Kiểm tra badge góc trên — phải hiện phiên bản clasp. Nếu thiếu, cài lại clasp rồi mở lại app.
 
 ### 2. Chọn thư mục & Script ID
