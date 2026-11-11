@@ -47,7 +47,7 @@ Installer NSIS nằm trong thư mục `release/`.
 
 | Khu vực | Việc cần làm |
 | --- | --- |
-| **Thư mục làm việc** | Bấm **Chọn folder** (hoặc chọn từ danh sách gần đây). Nút **Mở** mở folder trong Explorer. |
+| **Thư mục làm việc** | Bấm **Chọn folder** (hoặc chọn từ danh sách gần đây). **Mở Explorer** mở trong File Explorer; **Mở Cursor** mở folder trong Cursor IDE (cần CLI `cursor` trong PATH). |
 | **Script ID** | Dán Script ID, hoặc dán URL dạng `https://script.google.com/.../projects/<id>/...` — app tự lấy ID. |
 
 - Nếu folder đã có `.clasp.json`, app hiện badge **Có .clasp.json** và Script ID hiện tại.
