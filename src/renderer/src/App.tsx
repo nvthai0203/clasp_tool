@@ -209,6 +209,16 @@ export default function App(): JSX.Element {
           onSelect={() => void handleSelectFolder()}
           onPickRecent={(path) => void handlePickRecentFolder(path)}
           onOpen={() => void window.api.openFolder(folder)}
+          onOpenInCursor={() => {
+            void (async () => {
+              const result = await window.api.openInCursor(folder)
+              if (!result.ok) {
+                appendLog('stderr', `${result.error}\n`)
+              } else {
+                appendLog('system', `Đã mở Cursor: ${folder}\n`)
+              }
+            })()
+          }}
         />
         <ScriptIdInput
           value={options.scriptId}

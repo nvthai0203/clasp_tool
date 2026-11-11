@@ -14,6 +14,10 @@ const api = {
   selectFolder: (): Promise<string | null> => ipcRenderer.invoke('dialog:selectFolder'),
   readProject: (folder: string): Promise<ProjectInfo> => ipcRenderer.invoke('project:read', folder),
   openFolder: (folder: string): Promise<boolean> => ipcRenderer.invoke('shell:openFolder', folder),
+  openInCursor: (
+    folder: string
+  ): Promise<{ ok: true } | { ok: false; error: string }> =>
+    ipcRenderer.invoke('shell:openInCursor', folder),
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
   setSettings: (partial: Partial<AppSettings>): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:set', partial),

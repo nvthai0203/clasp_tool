@@ -126,6 +126,52 @@ function registerIpc(): void {
     return true
   })
 
+  ipcMain.handle('shell:openInCursor', (_event, folder: string) => {
+    if (!folder || !existsSync(folder)) {
+      return Promise.resolve({ ok: false as const, error: 'Thư mục không tồn tại.' })
+    }
+
+    return new Promise<{ ok: true } | { ok: false; error: string }>((resolve) => {
+      let settled = false
+      const finish = (result: { ok: true } | { ok: false; error: string }): void => {
+        if (settled) {
+          return
+        }
+        settled = true
+        resolve(result)
+      }
+
+      try {
+        const child = spawn('cursor', [folder], {
+          shell: true,
+          windowsHide: true,
+          detached: true,
+          stdio: 'ignore'
+        })
+
+        child.once('error', (error) => {
+          finish({
+            ok: false,
+            error:
+              `Không mở được Cursor: ${error.message}. ` +
+              `Trong Cursor mở Command Palette → “Shell Command: Install 'cursor' command in PATH”.`
+          })
+        })
+
+        child.unref()
+        setImmediate(() => finish({ ok: true }))
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        finish({
+          ok: false,
+          error:
+            `Không mở được Cursor: ${message}. ` +
+            `Trong Cursor mở Command Palette → “Shell Command: Install 'cursor' command in PATH”.`
+        })
+      }
+    })
+  })
+
   ipcMain.handle('settings:get', () => getSettings())
 
   ipcMain.handle('settings:set', (_event, partial: Partial<AppSettings>) => setSettings(partial))

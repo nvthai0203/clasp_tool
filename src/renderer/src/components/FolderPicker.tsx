@@ -8,6 +8,7 @@ interface Props {
   onSelect: () => void
   onPickRecent: (folder: string) => void
   onOpen: () => void
+  onOpenInCursor: () => void
 }
 
 export function FolderPicker({
@@ -17,7 +18,8 @@ export function FolderPicker({
   disabled,
   onSelect,
   onPickRecent,
-  onOpen
+  onOpen,
+  onOpenInCursor
 }: Props): JSX.Element {
   return (
     <section className="panel">
@@ -34,7 +36,10 @@ export function FolderPicker({
             Chọn folder
           </button>
           <button className="btn" onClick={onOpen} disabled={!folder || disabled}>
-            Mở
+            Mở Explorer
+          </button>
+          <button className="btn" onClick={onOpenInCursor} disabled={!folder || disabled}>
+            Mở Cursor
           </button>
         </div>
 
