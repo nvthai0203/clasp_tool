@@ -1,0 +1,286 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --border: #d7dee7;
+  --text: #1a2332;
+  --muted: #5b6b7c;
+  --accent: #1a73e8;
+  --accent-hover: #1557b0;
+  --danger: #c5221f;
+  --danger-bg: #fce8e6;
+  --ok: #137333;
+  --ok-bg: #e6f4ea;
+  --warn-bg: #fef7e0;
+  --warn-border: #f9ab00;
+  --log-bg: #0f1720;
+  --log-text: #d7e2ef;
+  --log-err: #ff8a80;
+  --log-sys: #80cbc4;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.04);
+  font-family: "Segoe UI", "IBM Plex Sans", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 12px;
+  padding: 14px;
+}
+
+.banner {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  border: 1px solid var(--warn-border);
+  background: var(--warn-bg);
+  color: #5f4300;
+}
+
+.banner code {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+}
+
+.panel h2 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field {
+  flex: 1;
+  min-width: 160px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  color: var(--text);
+}
+
+.field:focus {
+  outline: 2px solid rgba(26, 115, 232, 0.25);
+  border-color: var(--accent);
+}
+
+.btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: #f0f4f8;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-danger {
+  background: var(--danger-bg);
+  border-color: #f5c2c0;
+  color: var(--danger);
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.meta strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+}
+
+.badge.ok {
+  background: var(--ok-bg);
+  border-color: #a8dab5;
+  color: var(--ok);
+}
+
+.badge.bad {
+  background: var(--danger-bg);
+  border-color: #f5c2c0;
+  color: var(--danger);
+}
+
+.workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 12px;
+}
+
+.commands {
+  overflow: auto;
+  min-height: 0;
+}
+
+.group {
+  margin-bottom: 14px;
+}
+
+.group h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.group-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.checks {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.checks label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.log-panel {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+}
+
+.log-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.log-console {
+  min-height: 0;
+  overflow: auto;
+  background: var(--log-bg);
+  color: var(--log-text);
+  border-radius: 10px;
+  padding: 12px;
+  font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+  font-size: 12.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-line.stderr {
+  color: var(--log-err);
+}
+
+.log-line.system {
+  color: var(--log-sys);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 980px) {
+  .topbar,
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}
