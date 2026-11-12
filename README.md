@@ -85,6 +85,7 @@ clasp --version
 
 - Clasp Tool **không nhúng** clasp bên trong; mỗi máy dùng app vẫn cần `clasp` trong PATH.
 - Lệnh **Mở Cursor** cần CLI `cursor` trên máy đó (Command Palette Cursor → *Shell Command: Install 'cursor' command in PATH*).
+- Lệnh **Mở VS Code** cần CLI `code` trên máy đó (Command Palette VS Code → *Shell Command: Install 'code' command in PATH*).
 - Windows Defender / SmartScreen có thể cảnh báo lần đầu với app chưa ký code — chọn *More info* → *Run anyway* nếu bạn tự build.
 - Hiện cấu hình chỉ build **Windows x64**. Đóng gói trên máy Windows để có installer Windows.
 
@@ -109,7 +110,7 @@ npm run preview
 
 | Khu vực | Việc cần làm |
 | --- | --- |
-| **Thư mục làm việc** | Bấm **Chọn folder** (hoặc chọn từ danh sách gần đây). **Mở Explorer** mở trong File Explorer; **Mở Cursor** mở folder trong Cursor IDE (cần CLI `cursor` trong PATH). |
+| **Thư mục làm việc** | Bấm **Chọn folder** (hoặc chọn từ danh sách gần đây). **Mở Explorer** / **Mở Cursor** / **Mở VS Code** lần lượt mở folder trong File Explorer, Cursor IDE (`cursor` trong PATH), hoặc VS Code (`code` trong PATH). |
 | **Script ID** | Dán Script ID, hoặc dán URL dạng `https://script.google.com/.../projects/<id>/...` — app tự lấy ID. |
 
 - Nếu folder đã có `.clasp.json`, app hiện badge **Có .clasp.json** và Script ID hiện tại.

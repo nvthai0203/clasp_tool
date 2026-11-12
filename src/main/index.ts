@@ -101,6 +101,53 @@ function readProject(folder: string): ProjectInfo {
   }
 }
 
+type OpenEditorResult = { ok: true } | { ok: false; error: string }
+
+function openInEditorCli(
+  folder: string,
+  options: { command: string; appName: string; installHint: string }
+): Promise<OpenEditorResult> {
+  if (!folder || !existsSync(folder)) {
+    return Promise.resolve({ ok: false, error: 'Thư mục không tồn tại.' })
+  }
+
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = (result: OpenEditorResult): void => {
+      if (settled) {
+        return
+      }
+      settled = true
+      resolve(result)
+    }
+
+    try {
+      const child = spawn(options.command, [folder], {
+        shell: true,
+        windowsHide: true,
+        detached: true,
+        stdio: 'ignore'
+      })
+
+      child.once('error', (error) => {
+        finish({
+          ok: false,
+          error: `Không mở được ${options.appName}: ${error.message}. ${options.installHint}`
+        })
+      })
+
+      child.unref()
+      setImmediate(() => finish({ ok: true }))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      finish({
+        ok: false,
+        error: `Không mở được ${options.appName}: ${message}. ${options.installHint}`
+      })
+    }
+  })
+}
+
 function registerIpc(): void {
   ipcMain.handle('clasp:check', async () => checkClasp())
 
@@ -126,51 +173,23 @@ function registerIpc(): void {
     return true
   })
 
-  ipcMain.handle('shell:openInCursor', (_event, folder: string) => {
-    if (!folder || !existsSync(folder)) {
-      return Promise.resolve({ ok: false as const, error: 'Thư mục không tồn tại.' })
-    }
-
-    return new Promise<{ ok: true } | { ok: false; error: string }>((resolve) => {
-      let settled = false
-      const finish = (result: { ok: true } | { ok: false; error: string }): void => {
-        if (settled) {
-          return
-        }
-        settled = true
-        resolve(result)
-      }
-
-      try {
-        const child = spawn('cursor', [folder], {
-          shell: true,
-          windowsHide: true,
-          detached: true,
-          stdio: 'ignore'
-        })
-
-        child.once('error', (error) => {
-          finish({
-            ok: false,
-            error:
-              `Không mở được Cursor: ${error.message}. ` +
-              `Trong Cursor mở Command Palette → “Shell Command: Install 'cursor' command in PATH”.`
-          })
-        })
-
-        child.unref()
-        setImmediate(() => finish({ ok: true }))
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        finish({
-          ok: false,
-          error:
-            `Không mở được Cursor: ${message}. ` +
-            `Trong Cursor mở Command Palette → “Shell Command: Install 'cursor' command in PATH”.`
-        })
-      }
+  ipcMain.handle('shell:openInCursor', (_event, folder: string) =>
+    openInEditorCli(folder, {
+      command: 'cursor',
+      appName: 'Cursor',
+      installHint:
+        `Trong Cursor mở Command Palette → “Shell Command: Install 'cursor' command in PATH”.`
     })
-  })
+  )
+
+  ipcMain.handle('shell:openInVSCode', (_event, folder: string) =>
+    openInEditorCli(folder, {
+      command: 'code',
+      appName: 'VS Code',
+      installHint:
+        `Trong VS Code mở Command Palette → “Shell Command: Install 'code' command in PATH”.`
+    })
+  )
 
   ipcMain.handle('settings:get', () => getSettings())
 

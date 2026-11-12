@@ -219,6 +219,16 @@ export default function App(): JSX.Element {
               }
             })()
           }}
+          onOpenInVSCode={() => {
+            void (async () => {
+              const result = await window.api.openInVSCode(folder)
+              if (!result.ok) {
+                appendLog('stderr', `${result.error}\n`)
+              } else {
+                appendLog('system', `Đã mở VS Code: ${folder}\n`)
+              }
+            })()
+          }}
         />
         <ScriptIdInput
           value={options.scriptId}

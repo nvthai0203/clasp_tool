@@ -18,6 +18,10 @@ const api = {
     folder: string
   ): Promise<{ ok: true } | { ok: false; error: string }> =>
     ipcRenderer.invoke('shell:openInCursor', folder),
+  openInVSCode: (
+    folder: string
+  ): Promise<{ ok: true } | { ok: false; error: string }> =>
+    ipcRenderer.invoke('shell:openInVSCode', folder),
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
   setSettings: (partial: Partial<AppSettings>): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:set', partial),
