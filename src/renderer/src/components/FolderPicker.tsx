@@ -1,10 +1,8 @@
-import type { ProjectInfo } from '../../../shared/types'
-
 interface Props {
   folder: string
   recentFolders: string[]
-  project: ProjectInfo | null
   disabled?: boolean
+  selectPrimary?: boolean
   onSelect: () => void
   onPickRecent: (folder: string) => void
   onOpen: () => void
@@ -15,8 +13,8 @@ interface Props {
 export function FolderPicker({
   folder,
   recentFolders,
-  project,
   disabled,
+  selectPrimary = false,
   onSelect,
   onPickRecent,
   onOpen,
@@ -24,66 +22,55 @@ export function FolderPicker({
   onOpenInVSCode
 }: Props): JSX.Element {
   return (
-    <section className="panel">
-      <h2>Thư mục làm việc</h2>
-      <div className="stack">
-        <div className="row">
-          <input
-            className="field"
-            value={folder}
-            readOnly
-            placeholder="Chưa chọn thư mục..."
-          />
-          <button className="btn btn-primary" onClick={onSelect} disabled={disabled}>
-            Chọn folder
-          </button>
-          <button className="btn" onClick={onOpen} disabled={!folder || disabled}>
-            Mở Explorer
-          </button>
-          <button className="btn" onClick={onOpenInCursor} disabled={!folder || disabled}>
-            Mở Cursor
-          </button>
-          <button className="btn" onClick={onOpenInVSCode} disabled={!folder || disabled}>
-            Mở VS Code
-          </button>
-        </div>
-
-        {recentFolders.length > 0 && (
-          <div className="row">
-            <span className="label">Gần đây:</span>
-            <select
-              className="field"
-              value=""
-              disabled={disabled}
-              onChange={(e) => {
-                if (e.target.value) {
-                  onPickRecent(e.target.value)
-                }
-              }}
-            >
-              <option value="">Chọn thư mục gần đây...</option>
-              {recentFolders.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="meta">
-          {project?.exists ? (
-            <>
-              <span className="badge ok">Có .clasp.json</span>{' '}
-              Script ID: <strong>{project.scriptId || '(không có)'}</strong>
-            </>
-          ) : folder ? (
-            <span className="badge">Chưa có .clasp.json — dùng Clone hoặc Create</span>
-          ) : (
-            <span className="hint">Chọn thư mục trước khi chạy lệnh project.</span>
-          )}
-        </div>
+    <div className="stack context-folder">
+      <div className="row">
+        <input
+          className="field"
+          value={folder}
+          readOnly
+          placeholder="Chưa chọn thư mục..."
+          title={folder || undefined}
+        />
+        <button
+          className={`btn ${selectPrimary ? 'btn-primary' : ''}`}
+          onClick={onSelect}
+          disabled={disabled}
+        >
+          Chọn folder
+        </button>
       </div>
-    </section>
+
+      <div className="row">
+        <button className="btn" onClick={onOpen} disabled={!folder || disabled}>
+          Mở Explorer
+        </button>
+        <button className="btn" onClick={onOpenInCursor} disabled={!folder || disabled}>
+          Mở Cursor
+        </button>
+        <button className="btn" onClick={onOpenInVSCode} disabled={!folder || disabled}>
+          Mở VS Code
+        </button>
+        {recentFolders.length > 0 && (
+          <select
+            className="field"
+            value=""
+            disabled={disabled}
+            aria-label="Thư mục gần đây"
+            onChange={(e) => {
+              if (e.target.value) {
+                onPickRecent(e.target.value)
+              }
+            }}
+          >
+            <option value="">Gần đây...</option>
+            {recentFolders.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+    </div>
   )
 }

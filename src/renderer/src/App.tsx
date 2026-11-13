@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FolderPicker } from './components/FolderPicker'
-import { ScriptIdInput } from './components/ScriptIdInput'
+import { ContextBar } from './components/ContextBar'
 import { CommandPanel, type CommandOptions } from './components/CommandPanel'
 import { LogConsole, type LogLine } from './components/LogConsole'
 import { extractScriptId } from './utils/scriptId'
@@ -193,51 +192,41 @@ export default function App(): JSX.Element {
           {claspInfo.error ? ` — ${claspInfo.error}` : ''}
         </div>
       )}
-      {claspInfo?.ok && (
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <strong>Clasp Tool</strong>
-          <span className="badge ok">clasp {claspInfo.version}</span>
-        </div>
-      )}
 
-      <div className="topbar">
-        <FolderPicker
-          folder={folder}
-          recentFolders={recentFolders}
-          project={project}
-          disabled={running}
-          onSelect={() => void handleSelectFolder()}
-          onPickRecent={(path) => void handlePickRecentFolder(path)}
-          onOpen={() => void window.api.openFolder(folder)}
-          onOpenInCursor={() => {
-            void (async () => {
-              const result = await window.api.openInCursor(folder)
-              if (!result.ok) {
-                appendLog('stderr', `${result.error}\n`)
-              } else {
-                appendLog('system', `Đã mở Cursor: ${folder}\n`)
-              }
-            })()
-          }}
-          onOpenInVSCode={() => {
-            void (async () => {
-              const result = await window.api.openInVSCode(folder)
-              if (!result.ok) {
-                appendLog('stderr', `${result.error}\n`)
-              } else {
-                appendLog('system', `Đã mở VS Code: ${folder}\n`)
-              }
-            })()
-          }}
-        />
-        <ScriptIdInput
-          value={options.scriptId}
-          recentScriptIds={recentScriptIds}
-          disabled={running}
-          onChange={handleScriptIdChange}
-          onPickRecent={handlePickRecentScriptId}
-        />
-      </div>
+      <ContextBar
+        claspVersion={claspInfo?.ok ? claspInfo.version ?? null : null}
+        folder={folder}
+        recentFolders={recentFolders}
+        project={project}
+        scriptId={options.scriptId}
+        recentScriptIds={recentScriptIds}
+        disabled={running}
+        onSelectFolder={() => void handleSelectFolder()}
+        onPickRecentFolder={(path) => void handlePickRecentFolder(path)}
+        onOpenFolder={() => void window.api.openFolder(folder)}
+        onOpenInCursor={() => {
+          void (async () => {
+            const result = await window.api.openInCursor(folder)
+            if (!result.ok) {
+              appendLog('stderr', `${result.error}\n`)
+            } else {
+              appendLog('system', `Đã mở Cursor: ${folder}\n`)
+            }
+          })()
+        }}
+        onOpenInVSCode={() => {
+          void (async () => {
+            const result = await window.api.openInVSCode(folder)
+            if (!result.ok) {
+              appendLog('stderr', `${result.error}\n`)
+            } else {
+              appendLog('system', `Đã mở VS Code: ${folder}\n`)
+            }
+          })()
+        }}
+        onScriptIdChange={handleScriptIdChange}
+        onPickRecentScriptId={handlePickRecentScriptId}
+      />
 
       <div className="workspace">
         <CommandPanel
