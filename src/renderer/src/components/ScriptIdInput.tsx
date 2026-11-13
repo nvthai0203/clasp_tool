@@ -14,9 +14,9 @@ export function ScriptIdInput({
   onPickRecent
 }: Props): JSX.Element {
   return (
-    <section className="panel">
-      <h2>Script ID</h2>
-      <div className="stack">
+    <div className="stack context-script">
+      <div className="row">
+        <span className="label">Script ID</span>
         <input
           className="field"
           value={value}
@@ -25,31 +25,30 @@ export function ScriptIdInput({
           onChange={(e) => onChange(e.target.value)}
         />
         {recentScriptIds.length > 0 && (
-          <div className="row">
-            <span className="label">Gần đây:</span>
-            <select
-              className="field"
-              value=""
-              disabled={disabled}
-              onChange={(e) => {
-                if (e.target.value) {
-                  onPickRecent(e.target.value)
-                }
-              }}
-            >
-              <option value="">Chọn Script ID gần đây...</option>
-              {recentScriptIds.map((id) => (
-                <option key={id} value={id}>
-                  {id}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            className="field"
+            style={{ maxWidth: 180 }}
+            value=""
+            disabled={disabled}
+            aria-label="Script ID gần đây"
+            onChange={(e) => {
+              if (e.target.value) {
+                onPickRecent(e.target.value)
+              }
+            }}
+          >
+            <option value="">Gần đây...</option>
+            {recentScriptIds.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
         )}
-        <p className="hint">
-          Có thể dán URL dạng https://script.google.com/.../projects/&lt;id&gt;/...
-        </p>
       </div>
-    </section>
+      <p className="hint">
+        Có thể dán URL dạng https://script.google.com/.../projects/&lt;id&gt;/...
+      </p>
+    </div>
   )
 }
