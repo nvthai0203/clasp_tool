@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
 import type {
   AppSettings,
+  ClaspAuthUserResult,
   ClaspCheckResult,
   ClaspExitEvent,
   ClaspLogEvent,
@@ -11,6 +12,8 @@ import type {
 
 const api = {
   checkClasp: (): Promise<ClaspCheckResult> => ipcRenderer.invoke('clasp:check'),
+  getAuthorizedUser: (userName?: string): Promise<ClaspAuthUserResult> =>
+    ipcRenderer.invoke('clasp:authorizedUser', userName),
   selectFolder: (): Promise<string | null> => ipcRenderer.invoke('dialog:selectFolder'),
   readProject: (folder: string): Promise<ProjectInfo> => ipcRenderer.invoke('project:read', folder),
   openFolder: (folder: string): Promise<boolean> => ipcRenderer.invoke('shell:openFolder', folder),

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ClaspAuthUserResult } from '../../../shared/types'
 import { parseCustomArgs } from '../utils/scriptId'
 
 export interface CommandOptions {
@@ -21,6 +22,7 @@ interface Props {
   hasProject: boolean
   running: boolean
   options: CommandOptions
+  authUser: ClaspAuthUserResult | null
   onChange: (partial: Partial<CommandOptions>) => void
   onRun: (args: string[], confirmMessage?: string) => void
 }
@@ -40,6 +42,7 @@ export function CommandPanel({
   hasProject,
   running,
   options,
+  authUser,
   onChange,
   onRun
 }: Props): JSX.Element {
@@ -176,6 +179,24 @@ export function CommandPanel({
                 Auth <span className="group-sub">Đăng nhập Google</span>
               </h3>
               <div className="stack">
+                <div className="auth-status">
+                  {!authUser ? (
+                    <span className="hint">Đang kiểm tra đăng nhập…</span>
+                  ) : !authUser.ok ? (
+                    <span className="hint" title={authUser.error}>
+                      Không đọc được trạng thái login
+                      {authUser.error ? `: ${authUser.error}` : ''}
+                    </span>
+                  ) : authUser.loggedIn && authUser.email ? (
+                    <span className="badge ok" title={authUser.email}>
+                      Đang login: {authUser.email}
+                    </span>
+                  ) : authUser.loggedIn ? (
+                    <span className="badge ok">Đang login (không rõ email)</span>
+                  ) : (
+                    <span className="badge">Chưa đăng nhập</span>
+                  )}
+                </div>
                 <div className="row">
                   <span className="label">User (--user)</span>
                   <input
