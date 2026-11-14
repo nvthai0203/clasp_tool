@@ -5,6 +5,7 @@ import { LogConsole, type LogLine } from './components/LogConsole'
 import { extractScriptId } from './utils/scriptId'
 import type {
   AppSettings,
+  ClaspAuthUserResult,
   ClaspCheckResult,
   ClaspExitEvent,
   ProjectInfo
@@ -31,12 +32,16 @@ export default function App(): JSX.Element {
   const [project, setProject] = useState<ProjectInfo | null>(null)
   const [options, setOptions] = useState<CommandOptions>(defaultOptions)
   const [claspInfo, setClaspInfo] = useState<ClaspCheckResult | null>(null)
+  const [authUser, setAuthUser] = useState<ClaspAuthUserResult | null>(null)
   const [running, setRunning] = useState(false)
   const [lines, setLines] = useState<LogLine[]>([])
   const [lastExit, setLastExit] = useState<ClaspExitEvent | null>(null)
   const [lineId, setLineId] = useState(0)
   const folderRef = useRef(folder)
   folderRef.current = folder
+  const userNameRef = useRef(options.userName)
+  userNameRef.current = options.userName
+  const lastArgsRef = useRef<string[] | null>(null)
 
   const appendLog = useCallback((stream: LogLine['stream'], text: string) => {
     setLineId((prev) => {
@@ -58,6 +63,11 @@ export default function App(): JSX.Element {
     }
   }, [])
 
+  const refreshAuthUser = useCallback(async (userName?: string) => {
+    const result = await window.api.getAuthorizedUser(userName ?? userNameRef.current)
+    setAuthUser(result)
+  }, [])
+
   useEffect(() => {
     let disposed = false
 
@@ -71,10 +81,17 @@ export default function App(): JSX.Element {
       }
       setSettings(saved)
       setClaspInfo(check)
-      setOptions((prev) => ({ ...prev, userName: saved.userName || 'default' }))
+      const userName = saved.userName || 'default'
+      setOptions((prev) => ({ ...prev, userName }))
       if (saved.lastFolder) {
         setFolder(saved.lastFolder)
         await refreshProject(saved.lastFolder)
+      }
+      if (check.ok) {
+        const auth = await window.api.getAuthorizedUser(userName)
+        if (!disposed) {
+          setAuthUser(auth)
+        }
       }
     }
 
@@ -96,6 +113,11 @@ export default function App(): JSX.Element {
       if (currentFolder) {
         void refreshProject(currentFolder)
       }
+      const cmd = lastArgsRef.current?.[0]
+      if (cmd === 'login' || cmd === 'logout') {
+        void refreshAuthUser()
+      }
+      lastArgsRef.current = null
     })
 
     return () => {
@@ -103,7 +125,17 @@ export default function App(): JSX.Element {
       offLog()
       offExit()
     }
-  }, [appendLog, refreshProject])
+  }, [appendLog, refreshProject, refreshAuthUser])
+
+  useEffect(() => {
+    if (!claspInfo?.ok) {
+      return
+    }
+    const handle = window.setTimeout(() => {
+      void refreshAuthUser(options.userName)
+    }, 250)
+    return () => window.clearTimeout(handle)
+  }, [options.userName, claspInfo?.ok, refreshAuthUser])
 
   const updateOptions = (partial: Partial<CommandOptions>): void => {
     setOptions((prev) => {
@@ -163,6 +195,7 @@ export default function App(): JSX.Element {
       setOptions((prev) => ({ ...prev, scriptId }))
     }
 
+    lastArgsRef.current = resolvedArgs
     setLastExit(null)
     setRunning(true)
     const result = await window.api.runClasp({
@@ -172,6 +205,7 @@ export default function App(): JSX.Element {
     })
     if (!result.started) {
       setRunning(false)
+      lastArgsRef.current = null
       appendLog('stderr', `${result.error || 'Không khởi chạy được clasp'}\n`)
     }
   }
@@ -234,6 +268,7 @@ export default function App(): JSX.Element {
           hasProject={Boolean(project?.exists)}
           running={running}
           options={options}
+          authUser={authUser}
           onChange={updateOptions}
           onRun={(args, confirmMessage) => void runClasp(args, confirmMessage)}
         />

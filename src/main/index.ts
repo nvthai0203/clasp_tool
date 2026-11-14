@@ -4,7 +4,13 @@ import { existsSync, readFileSync } from 'fs'
 import { spawn } from 'child_process'
 import { ClaspRunner } from './claspRunner'
 import { getSettings, rememberFolder, rememberScriptId, setSettings } from './store'
-import type { AppSettings, ClaspCheckResult, ClaspRunRequest, ProjectInfo } from '../shared/types'
+import type {
+  AppSettings,
+  ClaspAuthUserResult,
+  ClaspCheckResult,
+  ClaspRunRequest,
+  ProjectInfo
+} from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
 const runner = new ClaspRunner()
@@ -69,6 +75,75 @@ function checkClasp(): Promise<ClaspCheckResult> {
       } else {
         resolve({
           ok: false,
+          error: stderr.trim() || stdout.trim() || `clasp thoát với mã ${code}`
+        })
+      }
+    })
+  })
+}
+
+function getAuthorizedUser(userName?: string): Promise<ClaspAuthUserResult> {
+  return new Promise((resolve) => {
+    const args = ['show-authorized-user', '--json']
+    const trimmed = userName?.trim()
+    if (trimmed && trimmed !== 'default') {
+      args.unshift('--user', trimmed)
+    }
+
+    const child = spawn('clasp', args, {
+      shell: true,
+      windowsHide: true
+    })
+
+    let stdout = ''
+    let stderr = ''
+
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString()
+    })
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderr += chunk.toString()
+    })
+
+    child.on('error', (error) => {
+      resolve({ ok: false, loggedIn: false, error: error.message })
+    })
+
+    child.on('close', (code) => {
+      const text = stdout.trim() || stderr.trim()
+      if (!text) {
+        resolve({
+          ok: false,
+          loggedIn: false,
+          error: code === 0 ? 'Không có output từ clasp' : `clasp thoát với mã ${code}`
+        })
+        return
+      }
+
+      try {
+        const jsonStart = text.indexOf('{')
+        const jsonEnd = text.lastIndexOf('}')
+        const jsonText =
+          jsonStart >= 0 && jsonEnd > jsonStart ? text.slice(jsonStart, jsonEnd + 1) : text
+        const parsed = JSON.parse(jsonText) as {
+          loggedIn?: boolean
+          email?: string | null
+        }
+        const loggedIn = Boolean(parsed.loggedIn)
+        const email =
+          typeof parsed.email === 'string' && parsed.email.trim()
+            ? parsed.email.trim()
+            : undefined
+        resolve({ ok: true, loggedIn, email })
+      } catch {
+        const lower = text.toLowerCase()
+        if (lower.includes('not logged in') || lower.includes('chưa đăng nhập')) {
+          resolve({ ok: true, loggedIn: false })
+          return
+        }
+        resolve({
+          ok: false,
+          loggedIn: false,
           error: stderr.trim() || stdout.trim() || `clasp thoát với mã ${code}`
         })
       }
@@ -150,6 +225,10 @@ function openInEditorCli(
 
 function registerIpc(): void {
   ipcMain.handle('clasp:check', async () => checkClasp())
+
+  ipcMain.handle('clasp:authorizedUser', async (_event, userName?: string) =>
+    getAuthorizedUser(userName)
+  )
 
   ipcMain.handle('dialog:selectFolder', async () => {
     const result = await dialog.showOpenDialog(mainWindow!, {

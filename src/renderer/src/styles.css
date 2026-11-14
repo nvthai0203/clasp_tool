@@ -328,6 +328,21 @@ button {
   color: var(--muted);
 }
 
+.auth-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.auth-status .badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .group-grid {
   display: flex;
   flex-wrap: wrap;

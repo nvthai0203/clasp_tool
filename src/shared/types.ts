@@ -19,6 +19,13 @@ export interface ClaspCheckResult {
   error?: string
 }
 
+export interface ClaspAuthUserResult {
+  ok: boolean
+  loggedIn: boolean
+  email?: string
+  error?: string
+}
+
 export interface ClaspRunRequest {
   args: string[]
   cwd: string
