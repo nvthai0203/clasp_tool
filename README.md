@@ -4,9 +4,33 @@ Desktop GUI (Electron + React + TypeScript) cho [clasp](https://github.com/googl
 
 Giao diện chính: **thanh context** (folder + Script ID) phía trên, panel lệnh bên trái (tab **Đồng bộ** / **Deploy** / **Khác**), panel **Log** bên phải.
 
+Repo: [github.com/nvthai0203/clasp_tool](https://github.com/nvthai0203/clasp_tool)
+
+## Tải về (Windows)
+
+Cách nhanh nhất — **không cần** `npm run dev`:
+
+1. Mở trang release mới nhất:  
+   **[Releases — Latest](https://github.com/nvthai0203/clasp_tool/releases/latest)**
+2. Tải file installer: **`Clasp Tool Setup x.x.x.exe`** (ví dụ hiện tại: `Clasp Tool Setup 1.0.0.exe`).
+3. Chạy file `.exe` → cài app → mở **Clasp Tool**.
+4. Trên máy đó vẫn cần cài clasp global (app gọi CLI `clasp`):
+
+```bash
+npm i -g @google/clasp
+```
+
+Kiểm tra: `clasp --version`. Mở app — badge trên thanh context phải hiện phiên bản clasp.
+
+> Link tải trực tiếp (khi đã publish release `v1.0.0` với đúng tên file):  
+> [Clasp Tool Setup 1.0.0.exe](https://github.com/nvthai0203/clasp_tool/releases/download/v1.0.0/Clasp%20Tool%20Setup%201.0.0.exe)  
+> Nếu link 404 → release chưa được tạo hoặc tên file khác; dùng trang [Releases](https://github.com/nvthai0203/clasp_tool/releases) để tải.
+
+Windows Defender / SmartScreen có thể cảnh báo app chưa ký code — *More info* → *Run anyway* nếu bạn tin nguồn (repo này).
+
 ## Yêu cầu
 
-- Node.js 18+
+- Node.js 18+ (cần để cài clasp; cũng cần nếu tự build từ source)
 - clasp cài global:
 
 ```bash
@@ -42,11 +66,13 @@ Set-Content node_modules\electron\path.txt "electron.exe" -NoNewline
 
 (Khuyến nghị clone/copy project ra ngoài OneDrive, ví dụ `C:\dev\clasp_tool`, rồi `npm install` lại.)
 
-## Đóng gói thành app dùng trên laptop / PC (Windows)
+## Đóng gói & phát hành (Windows)
 
-App được đóng gói bằng **electron-builder** thành bộ cài NSIS (`.exe`). Sau khi cài, mở như phần mềm bình thường — không cần chạy `npm run dev`.
+Người dùng cuối nên tải từ [Releases](https://github.com/nvthai0203/clasp_tool/releases/latest) (xem mục **Tải về**). Mục này dành cho người **tự build** hoặc **maintainer** publish bản mới.
 
-### Máy dùng để đóng gói (máy build)
+App đóng gói bằng **electron-builder** (NSIS `.exe`). Không commit thư mục `release/` lên git (đã có trong `.gitignore`).
+
+### Build installer trên máy Windows
 
 1. Cài [Node.js 18+](https://nodejs.org/) (có `npm`).
 2. Clone/mở repo, cài dependency:
@@ -55,59 +81,60 @@ App được đóng gói bằng **electron-builder** thành bộ cài NSIS (`.ex
 npm install
 ```
 
-3. Đảm bảo binary Electron đã có (nếu lỗi `Electron failed to install correctly`, xem mục **Phát triển** ở trên).
-4. Chạy đóng gói:
+3. Đảm bảo binary Electron đã có (nếu lỗi, xem mục **Phát triển**).
+4. Chạy:
 
 ```bash
 npm run dist
 ```
 
-Lệnh này sẽ:
+Lệnh này: build (`out/`) rồi đóng gói Windows x64 → `release/`.
 
-1. Build source (`electron-vite build`) → thư mục `out/`
-2. Đóng gói Windows x64 (NSIS) → thư mục `release/`
-
-### File nhận được
-
-Trong `release/` thường có:
-
-| File | Mục đích |
+| File trong `release/` | Mục đích |
 | --- | --- |
-| `Clasp Tool Setup x.x.x.exe` | **Installer** — mang sang máy khác để cài |
-| Thư mục `win-unpacked/` | Bản chạy trực tiếp (portable-ish), không cần cài |
+| `Clasp Tool Setup x.x.x.exe` | Installer — upload lên GitHub Release |
+| `win-unpacked/` | Chạy trực tiếp (portable-ish), thường không cần upload |
 
-Mang file **Setup `.exe`** (hoặc cả thư mục `win-unpacked`) sang laptop/PC cần dùng.
+Version trong tên file lấy từ `version` trong `package.json` (hiện `1.0.0` → `Clasp Tool Setup 1.0.0.exe`).
 
-### Cài trên laptop / PC đích
+### Checklist tạo GitHub Release
 
-1. Chạy `Clasp Tool Setup x.x.x.exe`.
-2. Chọn thư mục cài (NSIS cho phép đổi đường dẫn).
-3. Hoàn tất → mở **Clasp Tool** từ Start Menu / shortcut.
-4. **Bắt buộc trên máy đích:** cài clasp global (app gọi CLI `clasp` trên máy đó):
+Làm lần lượt khi muốn người khác **bấm tải là dùng**:
+
+1. [ ] Cập nhật `"version"` trong `package.json` (ví dụ `1.0.0` → `1.0.1`) nếu đây là bản mới.
+2. [ ] Commit / push code lên `main` (repo: [nvthai0203/clasp_tool](https://github.com/nvthai0203/clasp_tool)).
+3. [ ] Chạy `npm run dist` trên máy Windows; xác nhận có file  
+      `release/Clasp Tool Setup <version>.exe`.
+4. [ ] Trên GitHub: **Releases** → **Draft a new release**  
+      https://github.com/nvthai0203/clasp_tool/releases/new
+5. [ ] **Choose a tag**: tạo tag dạng `v1.0.0` (khớp version; Target: `main`).
+6. [ ] **Release title**: ví dụ `Clasp Tool v1.0.0`.
+7. [ ] Viết ngắn mô tả (changelog): UI mới, bugfix, v.v.
+8. [ ] **Attach binaries**: kéo thả `Clasp Tool Setup <version>.exe` vào vùng assets  
+      (**không** upload cả thư mục `win-unpacked`).
+9. [ ] Bỏ chọn pre-release (trừ khi cố ý phát hành thử).
+10. [ ] Bấm **Publish release**.
+11. [ ] Kiểm tra:
+    - [ ] Trang [latest](https://github.com/nvthai0203/clasp_tool/releases/latest) mở được.
+    - [ ] Tải `.exe` về, cài thử.
+    - [ ] Máy thử có `clasp` global; mở app thấy badge phiên bản clasp.
+12. [ ] (Tuỳ chọn) Cập nhật link tải trực tiếp trong mục **Tải về** của README nếu đổi version/tên file.
+
+Dùng GitHub CLI (nếu đã `gh auth login`):
 
 ```bash
-npm i -g @google/clasp
+npm run dist
+gh release create v1.0.0 "release/Clasp Tool Setup 1.0.0.exe" --title "Clasp Tool v1.0.0" --notes "Bản Windows x64. Sau khi cài: npm i -g @google/clasp"
 ```
-
-Cần có Node.js trên máy đích để cài clasp. Kiểm tra:
-
-```bash
-clasp --version
-```
-
-5. Mở Clasp Tool — badge clasp trên thanh context phải hiện phiên bản. Nếu thiếu, cài lại clasp rồi mở lại app.
 
 ### Lưu ý khi dùng bản đóng gói
 
-- Clasp Tool **không nhúng** clasp bên trong; mỗi máy dùng app vẫn cần `clasp` trong PATH.
-- Lệnh **Mở với Cursor** cần CLI `cursor` trên máy đó (Command Palette Cursor → *Shell Command: Install 'cursor' command in PATH*).
-- Lệnh **Mở với VS Code** cần CLI `code` trên máy đó (Command Palette VS Code → *Shell Command: Install 'code' command in PATH*).
-- Windows Defender / SmartScreen có thể cảnh báo lần đầu với app chưa ký code — chọn *More info* → *Run anyway* nếu bạn tự build.
-- Hiện cấu hình chỉ build **Windows x64**. Đóng gói trên máy Windows để có installer Windows.
+- Clasp Tool **không nhúng** clasp; mỗi máy vẫn cần `clasp` trong PATH.
+- **Mở với Cursor** / **Mở với VS Code** cần CLI `cursor` / `code` trong PATH.
+- SmartScreen có thể cảnh báo app chưa ký code.
+- Hiện chỉ build **Windows x64**.
 
 ### Chỉ build không đóng gói
-
-Nếu chỉ muốn kiểm tra bản production local (không tạo installer):
 
 ```bash
 npm run build
@@ -119,7 +146,7 @@ npm run preview
 ### 1. Chuẩn bị lần đầu
 
 1. Cài clasp global (xem mục **Yêu cầu**).
-2. Chạy app: `npm run dev` (dev) hoặc mở **Clasp Tool** đã cài từ installer trong `release/`.
+2. Chạy app: tải installer từ [Releases](https://github.com/nvthai0203/clasp_tool/releases/latest), hoặc `npm run dev` khi phát triển.
 3. Kiểm tra badge **clasp x.x.x** trên thanh context. Nếu thiếu, cài lại clasp rồi mở lại app.
 
 ### 2. Thanh context — thư mục & Script ID
