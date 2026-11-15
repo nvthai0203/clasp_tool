@@ -10,11 +10,10 @@ Repo: [github.com/nvthai0203/clasp_tool](https://github.com/nvthai0203/clasp_too
 
 Cách nhanh nhất — **không cần** `npm run dev`:
 
-1. Mở trang release mới nhất:  
-   **[Releases — Latest](https://github.com/nvthai0203/clasp_tool/releases/latest)**
-2. Tải file installer: **`Clasp Tool Setup x.x.x.exe`** (ví dụ hiện tại: `Clasp Tool Setup 1.0.0.exe`).
-3. Chạy file `.exe` → cài app → mở **Clasp Tool**.
-4. Trên máy đó vẫn cần cài clasp global (app gọi CLI `clasp`):
+1. Tải trực tiếp: **[Clasp.Tool.exe](https://github.com/nvthai0203/clasp_tool/releases/download/v1.0.0/Clasp.Tool.exe)**  
+   (hoặc mở trang **[Releases — Latest](https://github.com/nvthai0203/clasp_tool/releases/latest)** rồi chọn asset).
+2. Chạy file `.exe` → cài / mở **Clasp Tool**.
+3. Trên máy đó vẫn cần cài clasp global (app gọi CLI `clasp`):
 
 ```bash
 npm i -g @google/clasp
@@ -22,9 +21,9 @@ npm i -g @google/clasp
 
 Kiểm tra: `clasp --version`. Mở app — badge trên thanh context phải hiện phiên bản clasp.
 
-> Link tải trực tiếp (khi đã publish release `v1.0.0` với đúng tên file):  
-> [Clasp Tool Setup 1.0.0.exe](https://github.com/nvthai0203/clasp_tool/releases/download/v1.0.0/Clasp%20Tool%20Setup%201.0.0.exe)  
-> Nếu link 404 → release chưa được tạo hoặc tên file khác; dùng trang [Releases](https://github.com/nvthai0203/clasp_tool/releases) để tải.
+> Link tải trực tiếp (`v1.0.0`):  
+> https://github.com/nvthai0203/clasp_tool/releases/download/v1.0.0/Clasp.Tool.exe  
+> Nếu 404 → dùng trang [Releases](https://github.com/nvthai0203/clasp_tool/releases).
 
 Windows Defender / SmartScreen có thể cảnh báo app chưa ký code — *More info* → *Run anyway* nếu bạn tin nguồn (repo này).
 
