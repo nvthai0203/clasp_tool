@@ -6,9 +6,9 @@ Repo: [github.com/nvthai0203/clasp_tool](https://github.com/nvthai0203/clasp_too
 
 ## Tải về (Windows)
 
-**[⬇ Clasp_tool_by_Lucki_v1.0.0.exe (v1.0.0)](https://github.com/nvthai0203/clasp_tool/releases/download/v1.0.0/Clasp_tool_by_Lucki_v1.0.0.exe)**
+**[⬇ Clasp_tool_by_Lucki_v1.0.1.exe (v1.0.1)](https://github.com/nvthai0203/clasp_tool/releases/download/v1.0.1/Clasp_tool_by_Lucki_v1.0.1.exe)**
 
-1. Chạy `Clasp_tool_by_Lucki_v1.0.0.exe`.
+1. Chạy `Clasp_tool_by_Lucki_v1.0.1.exe`.
 2. Cài clasp (app không nhúng sẵn):
 
 ```bash
@@ -51,8 +51,8 @@ npm run dist
 Dùng **installer NSIS** `release/Clasp Tool Setup <version>.exe` (đủ DLL). **Không** upload riêng `win-unpacked/*.exe` — sẽ lỗi thiếu `ffmpeg.dll`.
 
 ```bash
-copy "release\Clasp Tool Setup 1.0.0.exe" "release\Clasp_tool_by_Lucki_v1.0.0.exe"
-gh release upload v1.0.0 "release/Clasp_tool_by_Lucki_v1.0.0.exe" --clobber
+copy "release\Clasp Tool Setup 1.0.1.exe" "release\Clasp_tool_by_Lucki_v1.0.1.exe"
+gh release create v1.0.1 "release/Clasp_tool_by_Lucki_v1.0.1.exe" --title "Clasp_tool_by_Lucki_v1.0.1" --notes "Windows x64 NSIS. Sau khi cài: npm i -g @google/clasp"
 ```
 
 Cập nhật link mục **Tải về** nếu đổi version/tên file. Chỉ build không đóng gói: `npm run build` rồi `npm run preview`.
