@@ -45,10 +45,10 @@ export function FolderPicker({
           Mở Explorer
         </button>
         <button className="btn" onClick={onOpenInCursor} disabled={!folder || disabled}>
-          Mở Cursor
+          Mở với Cursor
         </button>
         <button className="btn" onClick={onOpenInVSCode} disabled={!folder || disabled}>
-          Mở VS Code
+          Mở với VS Code
         </button>
         {recentFolders.length > 0 && (
           <select
