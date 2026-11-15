@@ -6,9 +6,9 @@ Repo: [github.com/nvthai0203/clasp_tool](https://github.com/nvthai0203/clasp_too
 
 ## Tải về (Windows)
 
-**[⬇ Clasp.Tool.exe (v1.0.0)](https://github.com/nvthai0203/clasp_tool/releases/download/v1.0.0/Clasp.Tool.exe)**
+**[⬇ Clasp_tool_by_Lucki_v1.0.0.exe (v1.0.0)](https://github.com/nvthai0203/clasp_tool/releases/download/v1.0.0/Clasp_tool_by_Lucki_v1.0.0.exe)**
 
-1. Chạy `Clasp.Tool.exe`.
+1. Chạy `Clasp_tool_by_Lucki_v1.0.0.exe`.
 2. Cài clasp (app không nhúng sẵn):
 
 ```bash
@@ -48,10 +48,10 @@ Lỗi Electron (`Electron uninstall` / binary thiếu): chạy `node node_module
 npm run dist
 ```
 
-Ra `release/` (Setup `.exe` hoặc `win-unpacked`). Upload GitHub Release với tên asset **`Clasp.Tool.exe`**, tag `vX.Y.Z`, rồi cập nhật link mục **Tải về**.
+Ra `release/` (Setup `.exe` hoặc `win-unpacked`). Upload GitHub Release với tên asset **`Clasp_tool_by_Lucki_vX.Y.Z.exe`**, tag `vX.Y.Z`, rồi cập nhật link mục **Tải về**.
 
 ```bash
-gh release create v1.0.0 "release/Clasp.Tool.exe" --title "Clasp Tool v1.0.0" --notes "Windows x64. Sau khi cài: npm i -g @google/clasp"
+gh release create v1.0.0 "release/Clasp_tool_by_Lucki_v1.0.0.exe" --title "Clasp Tool v1.0.0" --notes "Windows x64. Sau khi cài: npm i -g @google/clasp"
 ```
 
 Chỉ build không đóng gói: `npm run build` rồi `npm run preview`.
