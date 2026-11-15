@@ -169,10 +169,6 @@ export default function App(): JSX.Element {
     updateOptions({ scriptId: value })
   }
 
-  const handlePickRecentScriptId = (id: string): void => {
-    updateOptions({ scriptId: id })
-  }
-
   const runClasp = async (args: string[], confirmMessage?: string): Promise<void> => {
     if (!folder) {
       appendLog('stderr', 'Chưa chọn thư mục làm việc.\n')
@@ -190,8 +186,6 @@ export default function App(): JSX.Element {
     const scriptId = extractScriptId(options.scriptId)
     if (resolvedArgs[0] === 'clone' && scriptId) {
       resolvedArgs[1] = scriptId
-      const saved = await window.api.rememberScriptId(scriptId)
-      setSettings(saved)
       setOptions((prev) => ({ ...prev, scriptId }))
     }
 
@@ -216,7 +210,6 @@ export default function App(): JSX.Element {
   }
 
   const recentFolders = useMemo(() => settings?.recentFolders ?? [], [settings])
-  const recentScriptIds = useMemo(() => settings?.recentScriptIds ?? [], [settings])
 
   return (
     <div className="app">
@@ -233,7 +226,6 @@ export default function App(): JSX.Element {
         recentFolders={recentFolders}
         project={project}
         scriptId={options.scriptId}
-        recentScriptIds={recentScriptIds}
         disabled={running}
         onSelectFolder={() => void handleSelectFolder()}
         onPickRecentFolder={(path) => void handlePickRecentFolder(path)}
@@ -259,7 +251,6 @@ export default function App(): JSX.Element {
           })()
         }}
         onScriptIdChange={handleScriptIdChange}
-        onPickRecentScriptId={handlePickRecentScriptId}
       />
 
       <div className="workspace">

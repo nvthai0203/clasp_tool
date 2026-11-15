@@ -9,7 +9,6 @@ interface Props {
   recentFolders: string[]
   project: ProjectInfo | null
   scriptId: string
-  recentScriptIds: string[]
   disabled?: boolean
   onSelectFolder: () => void
   onPickRecentFolder: (folder: string) => void
@@ -17,7 +16,6 @@ interface Props {
   onOpenInCursor: () => void
   onOpenInVSCode: () => void
   onScriptIdChange: (value: string) => void
-  onPickRecentScriptId: (id: string) => void
 }
 
 function shortenPath(path: string, max = 48): string {
@@ -44,15 +42,13 @@ export function ContextBar({
   recentFolders,
   project,
   scriptId,
-  recentScriptIds,
   disabled,
   onSelectFolder,
   onPickRecentFolder,
   onOpenFolder,
   onOpenInCursor,
   onOpenInVSCode,
-  onScriptIdChange,
-  onPickRecentScriptId
+  onScriptIdChange
 }: Props): JSX.Element {
   const displayScriptId = project?.scriptId || scriptId
 
@@ -99,13 +95,7 @@ export function ContextBar({
           onOpenInCursor={onOpenInCursor}
           onOpenInVSCode={onOpenInVSCode}
         />
-        <ScriptIdInput
-          value={scriptId}
-          recentScriptIds={recentScriptIds}
-          disabled={disabled}
-          onChange={onScriptIdChange}
-          onPickRecent={onPickRecentScriptId}
-        />
+        <ScriptIdInput value={scriptId} disabled={disabled} onChange={onScriptIdChange} />
       </div>
     </section>
   )
