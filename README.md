@@ -48,10 +48,11 @@ Lỗi Electron (`Electron uninstall` / binary thiếu): chạy `node node_module
 npm run dist
 ```
 
-Ra `release/` (Setup `.exe` hoặc `win-unpacked`). Upload GitHub Release với tên asset **`Clasp_tool_by_Lucki_vX.Y.Z.exe`**, tag `vX.Y.Z`, rồi cập nhật link mục **Tải về**.
+Dùng **installer NSIS** `release/Clasp Tool Setup <version>.exe` (đủ DLL). **Không** upload riêng `win-unpacked/*.exe` — sẽ lỗi thiếu `ffmpeg.dll`.
 
 ```bash
-gh release create v1.0.0 "release/Clasp_tool_by_Lucki_v1.0.0.exe" --title "Clasp Tool v1.0.0" --notes "Windows x64. Sau khi cài: npm i -g @google/clasp"
+copy "release\Clasp Tool Setup 1.0.0.exe" "release\Clasp_tool_by_Lucki_v1.0.0.exe"
+gh release upload v1.0.0 "release/Clasp_tool_by_Lucki_v1.0.0.exe" --clobber
 ```
 
-Chỉ build không đóng gói: `npm run build` rồi `npm run preview`.
+Cập nhật link mục **Tải về** nếu đổi version/tên file. Chỉ build không đóng gói: `npm run build` rồi `npm run preview`.
