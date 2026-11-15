@@ -2,6 +2,8 @@
 
 Desktop GUI (Electron + React + TypeScript) cho [clasp](https://github.com/google/clasp) — chọn thư mục, dán Script ID, chạy login / clone / pull / push / deploy và xem log realtime.
 
+Giao diện chính: **thanh context** (folder + Script ID) phía trên, panel lệnh bên trái (tab **Đồng bộ** / **Deploy** / **Khác**), panel **Log** bên phải.
+
 ## Yêu cầu
 
 - Node.js 18+
@@ -18,13 +20,27 @@ npm install
 npm run dev
 ```
 
-Nếu gặp lỗi `Electron failed to install correctly` / `Electron uninstall`, tải lại binary:
+Nếu gặp lỗi `Electron failed to install correctly` / `Electron uninstall`, thử lần lượt:
 
 ```bash
 node node_modules/electron/install.js
 ```
 
 hoặc xóa `node_modules/electron` rồi `npm install electron --save-dev`.
+
+Trên Windows, nếu project nằm trong **OneDrive** và binary vẫn thiếu (`path.txt` / `electron.exe` không có), giải nén từ cache rồi copy thủ công:
+
+```powershell
+$zip = Get-ChildItem "$env:LOCALAPPDATA\electron\Cache\*\electron-v*-win32-x64.zip" | Select-Object -First 1
+$tmp = "$env:TEMP\electron-fix"
+Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+Expand-Archive $zip.FullName $tmp -Force
+New-Item -ItemType Directory -Force -Path node_modules\electron\dist | Out-Null
+Copy-Item "$tmp\*" node_modules\electron\dist\ -Recurse -Force
+Set-Content node_modules\electron\path.txt "electron.exe" -NoNewline
+```
+
+(Khuyến nghị clone/copy project ra ngoài OneDrive, ví dụ `C:\dev\clasp_tool`, rồi `npm install` lại.)
 
 ## Đóng gói thành app dùng trên laptop / PC (Windows)
 
@@ -79,13 +95,13 @@ Cần có Node.js trên máy đích để cài clasp. Kiểm tra:
 clasp --version
 ```
 
-5. Mở Clasp Tool — badge góc trên phải hiện phiên bản clasp. Nếu thiếu, cài lại clasp rồi mở lại app.
+5. Mở Clasp Tool — badge clasp trên thanh context phải hiện phiên bản. Nếu thiếu, cài lại clasp rồi mở lại app.
 
 ### Lưu ý khi dùng bản đóng gói
 
 - Clasp Tool **không nhúng** clasp bên trong; mỗi máy dùng app vẫn cần `clasp` trong PATH.
-- Lệnh **Mở Cursor** cần CLI `cursor` trên máy đó (Command Palette Cursor → *Shell Command: Install 'cursor' command in PATH*).
-- Lệnh **Mở VS Code** cần CLI `code` trên máy đó (Command Palette VS Code → *Shell Command: Install 'code' command in PATH*).
+- Lệnh **Mở với Cursor** cần CLI `cursor` trên máy đó (Command Palette Cursor → *Shell Command: Install 'cursor' command in PATH*).
+- Lệnh **Mở với VS Code** cần CLI `code` trên máy đó (Command Palette VS Code → *Shell Command: Install 'code' command in PATH*).
 - Windows Defender / SmartScreen có thể cảnh báo lần đầu với app chưa ký code — chọn *More info* → *Run anyway* nếu bạn tự build.
 - Hiện cấu hình chỉ build **Windows x64**. Đóng gói trên máy Windows để có installer Windows.
 
@@ -104,72 +120,87 @@ npm run preview
 
 1. Cài clasp global (xem mục **Yêu cầu**).
 2. Chạy app: `npm run dev` (dev) hoặc mở **Clasp Tool** đã cài từ installer trong `release/`.
-3. Kiểm tra badge góc trên — phải hiện phiên bản clasp. Nếu thiếu, cài lại clasp rồi mở lại app.
+3. Kiểm tra badge **clasp x.x.x** trên thanh context. Nếu thiếu, cài lại clasp rồi mở lại app.
 
-### 2. Chọn thư mục & Script ID
+### 2. Thanh context — thư mục & Script ID
+
+Hầu hết lệnh (kể cả **login** / **logout**) chỉ bật sau khi đã chọn thư mục. Banner trong panel lệnh sẽ nhắc nếu chưa chọn.
 
 | Khu vực | Việc cần làm |
 | --- | --- |
-| **Thư mục làm việc** | Bấm **Chọn folder** (hoặc chọn từ danh sách gần đây). **Mở Explorer** / **Mở Cursor** / **Mở VS Code** lần lượt mở folder trong File Explorer, Cursor IDE (`cursor` trong PATH), hoặc VS Code (`code` trong PATH). |
-| **Script ID** | Dán Script ID, hoặc dán URL dạng `https://script.google.com/.../projects/<id>/...` — app tự lấy ID. |
+| **Thư mục** | Bấm **Chọn folder** (primary khi chưa chọn) hoặc chọn từ **Gần đây**. **Mở Explorer** / **Mở với Cursor** / **Mở với VS Code** mở folder tương ứng (cần CLI `cursor` / `code` trong PATH). |
+| **Script ID** | Dán Script ID, hoặc URL dạng `https://script.google.com/.../projects/<id>/...` — app tự lấy ID. Có thể chọn ID gần đây. |
 
-- Nếu folder đã có `.clasp.json`, app hiện badge **Có .clasp.json** và Script ID hiện tại.
-- Nếu chưa có `.clasp.json`, dùng **clone** hoặc **create** trước khi `pull` / `push` / `deploy`.
+- Thanh status hiện path (rút gọn), badge **Có .clasp.json** / **Chưa có project**, và Script ID.
+- Chưa có `.clasp.json` → dùng **clone** hoặc **create** (tab **Đồng bộ**) trước khi `pull` / `push` / `deploy`.
 
-### 3. Đăng nhập Google
+### 3. Panel lệnh (3 tab)
 
-1. (Tùy chọn) Điền tên user vào ô **User (--user)** nếu dùng nhiều tài khoản clasp.
-2. Bấm **login** — trình duyệt mở để xác thực Google.
-   1. Xem tiến trình ở panel **Log**. Xong có thể bấm **logout** khi cần.
+| Tab | Nội dung |
+| --- | --- |
+| **Đồng bộ** | Auth (login/logout), Project (clone/pull/push/create, …) |
+| **Deploy** | version / deploy / undeploy / open-web-app |
+| **Khác** | run function + Custom |
 
-### 4. Quy trình thường gặp
+- Nút lệnh giữ tên clasp tiếng Anh; nhóm có phụ đề tiếng Việt ngắn.
+- Nút primary đổi theo state: chưa có project + có Script ID → **clone**; đã có project → **push** (Đồng bộ) / **deploy** (Deploy).
+- Hover (hoặc focus) nút lệnh → dòng preview dưới panel hiện `clasp …` sắp chạy.
 
-**Lấy project có sẵn về máy**
+### 4. Đăng nhập Google (tab Đồng bộ → Auth)
 
-1. Chọn folder trống (hoặc folder bạn muốn chứa code).
-2. Dán Script ID.
+1. **Chọn folder** trước (bắt buộc với UI hiện tại).
+2. Xem badge trạng thái: **Chưa đăng nhập** / **Đang login: email@…**.
+3. (Tùy chọn) Điền **User (--user)** nếu dùng nhiều tài khoản clasp.
+4. Bấm **login** — trình duyệt mở để xác thực Google; theo dõi panel **Log**.
+5. **logout** khi cần đăng xuất.
+
+### 5. Quy trình thường gặp
+
+**Lấy project có sẵn về máy** (tab **Đồng bộ**)
+
+1. Chọn folder trống (hoặc folder muốn chứa code).
+2. Dán Script ID trên thanh context.
 3. Bấm **clone** (có thể điền Version nếu cần bản cụ thể).
-4. Sau khi clone thành công, folder sẽ có `.clasp.json` và mã nguồn.
+4. Sau khi clone thành công, folder có `.clasp.json` và mã nguồn.
 
-**Đồng bộ code**
+**Đồng bộ code** (tab **Đồng bộ**)
 
 - **pull** — tải code từ Google về máy.
-- **push** — đẩy code local lên Google.
+- **push** — đẩy code local lên Google (thường là nút primary khi đã có project).
 - Bật **--force** nếu cần ghi đè (có hộp thoại xác nhận).
 - Bật **--watch** để tự push mỗi khi sửa file; bấm **Hủy** trên Log để dừng.
 
-**Tạo project mới**
+**Tạo project mới** (tab **Đồng bộ**)
 
 1. Chọn folder.
 2. Nhập tiêu đề + loại script (standalone, sheets, …).
 3. Bấm **create**.
 
-**Deploy**
+**Deploy** (tab **Deploy**)
 
 1. (Khuyến nghị) **version** — tạo version kèm mô tả.
 2. **deploy** — có thể thêm mô tả deploy và/hoặc `deploymentId` để cập nhật deployment cũ.
 3. **open-web-app** — mở web app đã deploy (có thể kèm `deploymentId`).
 4. **undeploy** — xóa deployment (cần `deploymentId`, có xác nhận).
 
-**Chạy function**
+**Chạy function** (tab **Khác**)
 
 1. Nhập tên function Apps Script.
 2. Bấm **run**.
 
-### 5. Panel Log
+### 6. Panel Log
 
 - Hiện stdout/stderr realtime của lệnh clasp.
 - **Copy** — copy toàn bộ log.
 - **Clear** — xóa log (khi không có lệnh đang chạy).
 - **Hủy** — dừng process đang chạy (hữu ích với `push --watch`).
 
-### 6. Lệnh tùy chỉnh (Custom)
+### 7. Lệnh tùy chỉnh (tab Khác → Custom)
 
-1. Bấm **Hiện** trong mục Custom.
-2. Nhập args sau `clasp`, ví dụ: `versions` hoặc `push --watch`.
-3. Bấm **Chạy custom**.
+1. Nhập args sau `clasp`, ví dụ: `versions` hoặc `push --watch`.
+2. Bấm **Chạy custom** (hover để xem preview `clasp …`).
 
-### 7. Lệnh nguy hiểm
+### 8. Lệnh nguy hiểm
 
 Các lệnh sau luôn hỏi xác nhận trước khi chạy:
 
@@ -180,6 +211,6 @@ Các lệnh sau luôn hỏi xác nhận trước khi chạy:
 
 ### Gợi ý nhanh
 
-1. **login** → chọn folder → **clone** (Script ID) → sửa code → **push**.
-2. Folder đã có project: chọn folder → **pull** / **push** / **deploy**.
+1. Chọn folder → **login** (tab Đồng bộ) → dán Script ID → **clone** → sửa code → **push**.
+2. Folder đã có project: chọn folder → **pull** / **push** (Đồng bộ) hoặc **deploy** (Deploy).
 3. Chỉ một lệnh clasp chạy tại một thời điểm; muốn đổi lệnh thì **Hủy** trước.
