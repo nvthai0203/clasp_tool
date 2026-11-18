@@ -176,6 +176,12 @@ button {
   cursor: not-allowed;
 }
 
+.btn:focus-visible,
+.tab:focus-visible {
+  outline: 2px solid rgba(26, 115, 232, 0.45);
+  outline-offset: 2px;
+}
+
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
@@ -363,11 +369,77 @@ button {
   align-items: center;
 }
 
+.group-note {
+  margin: 0 0 8px;
+}
+
+.danger-zone {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.recent-select {
+  flex: 0 1 168px;
+  min-width: 128px;
+  max-width: 168px;
+}
+
 .cmd-preview {
   border-top: 1px solid var(--border);
   padding-top: 8px;
   min-height: 28px;
   font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(16, 24, 40, 0.45);
+}
+
+.modal {
+  width: min(520px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.modal-message {
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
+
+.modal-command {
+  display: block;
+  font-family: "Cascadia Mono", "Consolas", "Courier New", monospace;
+  font-size: 12.5px;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.modal-actions {
+  justify-content: flex-end;
+  margin-top: 14px;
 }
 
 .cmd-preview code {

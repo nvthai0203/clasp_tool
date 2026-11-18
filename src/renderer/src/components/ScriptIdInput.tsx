@@ -1,3 +1,5 @@
+import { extractScriptId } from '../utils/scriptId'
+
 interface Props {
   value: string
   disabled?: boolean
@@ -5,6 +7,10 @@ interface Props {
 }
 
 export function ScriptIdInput({ value, disabled, onChange }: Props): JSX.Element {
+  const trimmed = value.trim()
+  const extracted = extractScriptId(value)
+  const differs = Boolean(extracted && extracted !== trimmed)
+
   return (
     <div className="stack context-script">
       <div className="row">
@@ -17,9 +23,13 @@ export function ScriptIdInput({ value, disabled, onChange }: Props): JSX.Element
           onChange={(e) => onChange(e.target.value)}
         />
       </div>
-      <p className="hint">
-        Có thể dán URL dạng https://script.google.com/.../projects/&lt;id&gt;/...
-      </p>
+      {differs ? (
+        <p className="hint">
+          Sẽ dùng ID <strong>{extracted}</strong>
+        </p>
+      ) : (
+        <p className="hint">Có thể dán URL dạng https://script.google.com/.../projects/&lt;id&gt;/...</p>
+      )}
     </div>
   )
 }
