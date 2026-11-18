@@ -1,3 +1,5 @@
+import { folderMenuLabel } from '../utils/display'
+
 interface Props {
   folder: string
   recentFolders: string[]
@@ -21,6 +23,8 @@ export function FolderPicker({
   onOpenInCursor,
   onOpenInVSCode
 }: Props): JSX.Element {
+  const inRecent = Boolean(folder && recentFolders.includes(folder))
+
   return (
     <div className="stack context-folder">
       <div className="row">
@@ -32,6 +36,7 @@ export function FolderPicker({
           title={folder || undefined}
         />
         <button
+          type="button"
           className={`btn ${selectPrimary ? 'btn-primary' : ''}`}
           onClick={onSelect}
           disabled={disabled}
@@ -41,21 +46,22 @@ export function FolderPicker({
       </div>
 
       <div className="row">
-        <button className="btn" onClick={onOpen} disabled={!folder || disabled}>
-          Mở Explorer
+        <button type="button" className="btn" onClick={onOpen} disabled={!folder || disabled}>
+          Mở thư mục
         </button>
-        <button className="btn" onClick={onOpenInCursor} disabled={!folder || disabled}>
+        <button type="button" className="btn" onClick={onOpenInCursor} disabled={!folder || disabled}>
           Mở với Cursor
         </button>
-        <button className="btn" onClick={onOpenInVSCode} disabled={!folder || disabled}>
+        <button type="button" className="btn" onClick={onOpenInVSCode} disabled={!folder || disabled}>
           Mở với VS Code
         </button>
         {recentFolders.length > 0 && (
           <select
-            className="field"
-            value=""
+            className="field recent-select"
+            value={inRecent ? folder : ''}
             disabled={disabled}
             aria-label="Thư mục gần đây"
+            title={folder || 'Thư mục gần đây'}
             onChange={(e) => {
               if (e.target.value) {
                 onPickRecent(e.target.value)
@@ -64,8 +70,8 @@ export function FolderPicker({
           >
             <option value="">Gần đây...</option>
             {recentFolders.map((item) => (
-              <option key={item} value={item}>
-                {item}
+              <option key={item} value={item} title={item}>
+                {folderMenuLabel(item)}
               </option>
             ))}
           </select>

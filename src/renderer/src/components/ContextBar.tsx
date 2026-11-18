@@ -3,7 +3,6 @@ import { FolderPicker } from './FolderPicker'
 import { ScriptIdInput } from './ScriptIdInput'
 
 interface Props {
-  title?: string
   claspVersion: string | null
   folder: string
   recentFolders: string[]
@@ -18,25 +17,7 @@ interface Props {
   onScriptIdChange: (value: string) => void
 }
 
-function shortenPath(path: string, max = 48): string {
-  if (!path || path.length <= max) {
-    return path
-  }
-  const parts = path.replace(/\\/g, '/').split('/')
-  const leaf = parts[parts.length - 1] || path
-  const head = path.slice(0, 12)
-  return `${head}…/${leaf}`
-}
-
-function shortenId(id: string, max = 28): string {
-  if (!id || id.length <= max) {
-    return id
-  }
-  return `${id.slice(0, 10)}…${id.slice(-8)}`
-}
-
 export function ContextBar({
-  title = 'Clasp Tool',
   claspVersion,
   folder,
   recentFolders,
@@ -50,23 +31,14 @@ export function ContextBar({
   onOpenInVSCode,
   onScriptIdChange
 }: Props): JSX.Element {
-  const displayScriptId = project?.scriptId || scriptId
-
   return (
     <section className="panel context-bar">
       <div className="context-bar-header">
-        <strong>{title}</strong>
-        {claspVersion ? <span className="badge ok">clasp {claspVersion}</span> : null}
-      </div>
-
-      <div className="context-bar-status">
-        <div className="context-meta">
-          {folder ? (
-            <span className="meta" title={folder}>
-              <strong>{shortenPath(folder)}</strong>
-            </span>
+        <div className="context-bar-status">
+          {claspVersion ? (
+            <span className="badge ok">clasp {claspVersion}</span>
           ) : (
-            <span className="hint">Chưa chọn thư mục</span>
+            <span className="badge bad">Không thấy clasp</span>
           )}
           {folder ? (
             project?.exists ? (
@@ -74,12 +46,9 @@ export function ContextBar({
             ) : (
               <span className="badge">Chưa có project</span>
             )
-          ) : null}
-          {displayScriptId ? (
-            <span className="meta" title={displayScriptId}>
-              ID: <strong>{shortenId(displayScriptId)}</strong>
-            </span>
-          ) : null}
+          ) : (
+            <span className="hint">Chưa chọn thư mục</span>
+          )}
         </div>
       </div>
 

@@ -18,6 +18,11 @@ export function extractScriptId(input: string): string {
   return trimmed
 }
 
+export function formatClasp(args: string[]): string {
+  const quote = (arg: string): string => (/\s/.test(arg) ? `"${arg}"` : arg)
+  return `clasp ${args.map(quote).join(' ')}`
+}
+
 export function parseCustomArgs(input: string): string[] {
   const args: string[] = []
   const re = /"([^"]*)"|'([^']*)'|(\S+)/g

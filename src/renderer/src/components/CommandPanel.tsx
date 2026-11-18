@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ClaspAuthUserResult } from '../../../shared/types'
-import { parseCustomArgs } from '../utils/scriptId'
+import { extractScriptId, formatClasp, parseCustomArgs } from '../utils/scriptId'
 
 export interface CommandOptions {
   scriptId: string
@@ -29,12 +29,14 @@ interface Props {
 
 type TabId = 'sync' | 'deploy' | 'other'
 
-function quoteArg(arg: string): string {
-  return /\s/.test(arg) ? `"${arg}"` : arg
-}
-
-function formatClasp(args: string[]): string {
-  return `clasp ${args.map(quoteArg).join(' ')}`
+function whyDisabled(running: boolean, hasFolder: boolean, extra?: string): string | undefined {
+  if (!hasFolder) {
+    return 'Chọn thư mục trước'
+  }
+  if (running) {
+    return 'Đang có lệnh chạy'
+  }
+  return extra
 }
 
 export function CommandPanel({
@@ -49,15 +51,20 @@ export function CommandPanel({
   const [tab, setTab] = useState<TabId>('sync')
   const [previewArgs, setPreviewArgs] = useState<string[] | null>(null)
 
-  const busy = running || !hasFolder
-  const needProject = running || !hasFolder || !hasProject
-  const hasScriptId = Boolean(options.scriptId.trim())
+  const scriptId = extractScriptId(options.scriptId)
+  const hasScriptId = Boolean(scriptId)
   const hasCreateTitle = Boolean(options.createTitle.trim())
+  const hasDeploymentId = Boolean(options.deploymentId.trim())
+  const hasFunctionName = Boolean(options.functionName.trim())
 
-  const clonePrimary = !hasProject && hasScriptId
-  const createPrimary = !hasProject && !hasScriptId && hasCreateTitle
-  const pushPrimary = hasProject
-  const deployPrimary = hasProject
+  const loginPrimary = Boolean(
+    hasFolder && !hasProject && authUser?.ok && !authUser.loggedIn && !running
+  )
+  const clonePrimary = hasFolder && !hasProject && hasScriptId && !loginPrimary && !running
+  const createPrimary =
+    hasFolder && !hasProject && !hasScriptId && hasCreateTitle && !loginPrimary && !running
+  const pushPrimary = hasProject && !running
+  const deployPrimary = hasProject && !running
 
   const setPreview = (args: string[] | null): void => {
     setPreviewArgs(args)
@@ -71,7 +78,7 @@ export function CommandPanel({
   })
 
   const buildCloneArgs = (): string[] => {
-    const args = ['clone', options.scriptId.trim()]
+    const args = ['clone', scriptId]
     if (options.versionNumber.trim()) {
       args.push(options.versionNumber.trim())
     }
@@ -105,26 +112,85 @@ export function CommandPanel({
     return args
   }
 
-  const buildDeployArgs = (): string[] => {
-    const args = ['deploy']
+  const withDeployDescription = (args: string[]): string[] => {
     if (options.deployDescription.trim()) {
       args.push('-d', options.deployDescription.trim())
-    }
-    if (options.deploymentId.trim()) {
-      args.push('-i', options.deploymentId.trim())
     }
     return args
   }
 
+  const buildNewDeployArgs = (): string[] => withDeployDescription(['deploy'])
+
+  const buildUpdateDeployArgs = (): string[] =>
+    withDeployDescription(['deploy', '-i', options.deploymentId.trim()])
+
   const buildOpenWebAppArgs = (): string[] => {
     const args = ['open-web-app']
-    if (options.deploymentId.trim()) {
+    if (hasDeploymentId) {
       args.push(options.deploymentId.trim())
     }
     return args
   }
 
   const buildCustomArgs = (): string[] => parseCustomArgs(options.customArgs.trim())
+
+  const runButton = (
+    label: string,
+    args: string[],
+    reason: string | undefined,
+    opts?: { primary?: boolean; danger?: boolean; confirm?: string; ariaLabel?: string }
+  ): JSX.Element => (
+    <button
+      type="button"
+      className={`btn${opts?.primary ? ' btn-primary' : ''}${opts?.danger ? ' btn-danger' : ''}`}
+      disabled={reason !== undefined}
+      title={reason}
+      aria-label={opts?.ariaLabel}
+      {...previewHandlers(args)}
+      onClick={() => {
+        if (reason) {
+          return
+        }
+        onRun(args, opts?.confirm)
+      }}
+    >
+      {label}
+    </button>
+  )
+
+  const pinnedArgs = (): string[] | null => {
+    if (!hasFolder || running) {
+      return null
+    }
+    if (tab === 'sync') {
+      if (loginPrimary) {
+        return ['login']
+      }
+      if (clonePrimary) {
+        return buildCloneArgs()
+      }
+      if (createPrimary) {
+        return buildCreateArgs()
+      }
+      if (pushPrimary) {
+        return buildPushArgs()
+      }
+      return null
+    }
+    if (tab === 'deploy' && deployPrimary) {
+      return buildNewDeployArgs()
+    }
+    return null
+  }
+
+  const shownArgs = previewArgs && previewArgs.length > 0 ? previewArgs : pinnedArgs()
+  const showingHover = Boolean(previewArgs && previewArgs.length > 0)
+
+  const projectReason = hasProject ? undefined : 'Cần file .clasp.json'
+  const scriptReason = hasScriptId ? undefined : 'Cần Script ID'
+  const titleReason = hasCreateTitle ? undefined : 'Cần tiêu đề script'
+  const deploymentReason = hasDeploymentId ? undefined : 'Cần deploymentId'
+  const functionReason = hasFunctionName ? undefined : 'Cần tên function'
 
   return (
     <section className="panel commands">
@@ -161,13 +227,11 @@ export function CommandPanel({
         </div>
       </div>
 
-      {!hasFolder && (
-        <div className="empty-banner">Chọn thư mục ở thanh trên để bật lệnh.</div>
-      )}
+      {!hasFolder && <div className="empty-banner">Chọn thư mục ở thanh trên để bật lệnh.</div>}
       {hasFolder && !hasProject && tab === 'sync' && (
         <div className="empty-banner">
           Folder chưa có <code>.clasp.json</code>. Dùng <strong>clone</strong> hoặc{' '}
-          <strong>create</strong>.
+          <strong>create</strong> ngay bên dưới.
         </div>
       )}
 
@@ -176,7 +240,7 @@ export function CommandPanel({
           <>
             <div className="group">
               <h3>
-                Auth <span className="group-sub">Đăng nhập Google</span>
+                Đăng nhập <span className="group-sub">Tài khoản Google</span>
               </h3>
               <div className="stack">
                 <div className="auth-status">
@@ -198,250 +262,306 @@ export function CommandPanel({
                   )}
                 </div>
                 <div className="row">
-                  <span className="label">User (--user)</span>
+                  <span className="label">Tài khoản</span>
                   <input
                     className="field"
                     value={options.userName}
                     disabled={running}
                     onChange={(e) => onChange({ userName: e.target.value })}
                     placeholder="default"
+                    aria-label="Tài khoản clasp"
                   />
                 </div>
+                <p className="hint">Tên khác default sẽ gửi --user.</p>
                 <div className="group-grid">
-                  <button
-                    className="btn"
-                    disabled={busy}
-                    {...previewHandlers(['login'])}
-                    onClick={() => onRun(['login'])}
-                  >
-                    login
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={busy}
-                    {...previewHandlers(['logout'])}
-                    onClick={() => onRun(['logout'])}
-                  >
-                    logout
-                  </button>
+                  {runButton('login', ['login'], whyDisabled(running, hasFolder), {
+                    primary: loginPrimary
+                  })}
+                  {runButton('logout', ['logout'], whyDisabled(running, hasFolder))}
+                  {runButton('list', ['list'], whyDisabled(running, hasFolder))}
                 </div>
               </div>
             </div>
 
-            <div className="group">
+            {!hasProject && (
+              <>
+                <div className="group">
+                  <h3>
+                    Clone <span className="group-sub">Tải script về folder này</span>
+                  </h3>
+                  <div className="row">
+                    <input
+                      className="field"
+                      value={options.versionNumber}
+                      disabled={running}
+                      placeholder="Version (chỉ cho clone)"
+                      aria-label="Version cho clone"
+                      onChange={(e) => onChange({ versionNumber: e.target.value })}
+                    />
+                    {runButton('clone', buildCloneArgs(), whyDisabled(running, hasFolder, scriptReason), {
+                      primary: clonePrimary
+                    })}
+                  </div>
+                  {!hasScriptId && <p className="hint">Dán Script ID hoặc URL ở thanh trên.</p>}
+                </div>
+
+                <div className="group">
+                  <h3>
+                    Create <span className="group-sub">Tạo script mới trong folder này</span>
+                  </h3>
+                  <div className="row">
+                    <input
+                      className="field"
+                      value={options.createTitle}
+                      disabled={running}
+                      placeholder="Tiêu đề script mới"
+                      aria-label="Tiêu đề script mới"
+                      onChange={(e) => onChange({ createTitle: e.target.value })}
+                    />
+                    <select
+                      className="field"
+                      style={{ maxWidth: 140 }}
+                      value={options.createType}
+                      disabled={running}
+                      aria-label="Loại script"
+                      onChange={(e) => onChange({ createType: e.target.value })}
+                    >
+                      <option value="standalone">standalone</option>
+                      <option value="docs">docs</option>
+                      <option value="sheets">sheets</option>
+                      <option value="slides">slides</option>
+                      <option value="forms">forms</option>
+                      <option value="webapp">webapp</option>
+                      <option value="api">api</option>
+                    </select>
+                    {runButton(
+                      'create',
+                      buildCreateArgs(),
+                      whyDisabled(running, hasFolder, titleReason),
+                      { primary: createPrimary }
+                    )}
+                  </div>
+                </div>
+
+                <div className="group">
+                  <h3>
+                    Khi đã có project <span className="group-sub">Cần .clasp.json</span>
+                  </h3>
+                  <p className="hint group-note">
+                    pull, push và open-container bật sau khi clone hoặc create. --force và --watch chỉ
+                    xuất hiện cạnh push.
+                  </p>
+                  <div className="group-grid">
+                    {runButton('pull', ['pull'], whyDisabled(running, hasFolder, projectReason))}
+                    {runButton('push', ['push'], whyDisabled(running, hasFolder, projectReason))}
+                    {runButton(
+                      'open-container',
+                      ['open-container'],
+                      whyDisabled(running, hasFolder, projectReason)
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {hasProject && (
+              <>
+                <div className="group">
+                  <h3>
+                    Đồng bộ code <span className="group-sub">pull và push</span>
+                  </h3>
+                  <div className="group-grid">
+                    {runButton('push', buildPushArgs(), whyDisabled(running, hasFolder, projectReason), {
+                      primary: pushPrimary,
+                      confirm: options.force
+                        ? 'Push với --force có thể ghi đè file trên Google. Tiếp tục?'
+                        : undefined
+                    })}
+                    {runButton('pull', ['pull'], whyDisabled(running, hasFolder, projectReason))}
+                    {runButton(
+                      'open-container',
+                      ['open-container'],
+                      whyDisabled(running, hasFolder, projectReason)
+                    )}
+                  </div>
+                  <div className="checks">
+                    <label title="Chỉ áp dụng cho push">
+                      <input
+                        type="checkbox"
+                        checked={options.force}
+                        disabled={running}
+                        onChange={(e) => onChange({ force: e.target.checked })}
+                      />
+                      push --force
+                    </label>
+                    <label title="Chỉ áp dụng cho push">
+                      <input
+                        type="checkbox"
+                        checked={options.watch}
+                        disabled={running}
+                        onChange={(e) => onChange({ watch: e.target.checked })}
+                      />
+                      push --watch
+                    </label>
+                  </div>
+                </div>
+
+                <div className="group">
+                  <h3>
+                    Clone / create <span className="group-sub">Script khác trong folder này</span>
+                  </h3>
+                  <div className="row">
+                    <input
+                      className="field"
+                      value={options.versionNumber}
+                      disabled={running}
+                      placeholder="Version (chỉ cho clone)"
+                      aria-label="Version cho clone"
+                      onChange={(e) => onChange({ versionNumber: e.target.value })}
+                    />
+                    {runButton('clone', buildCloneArgs(), whyDisabled(running, hasFolder, scriptReason))}
+                  </div>
+                  <div className="row">
+                    <input
+                      className="field"
+                      value={options.createTitle}
+                      disabled={running}
+                      placeholder="Tiêu đề script mới"
+                      aria-label="Tiêu đề script mới"
+                      onChange={(e) => onChange({ createTitle: e.target.value })}
+                    />
+                    <select
+                      className="field"
+                      style={{ maxWidth: 140 }}
+                      value={options.createType}
+                      disabled={running}
+                      aria-label="Loại script"
+                      onChange={(e) => onChange({ createType: e.target.value })}
+                    >
+                      <option value="standalone">standalone</option>
+                      <option value="docs">docs</option>
+                      <option value="sheets">sheets</option>
+                      <option value="slides">slides</option>
+                      <option value="forms">forms</option>
+                      <option value="webapp">webapp</option>
+                      <option value="api">api</option>
+                    </select>
+                    {runButton(
+                      'create',
+                      buildCreateArgs(),
+                      whyDisabled(running, hasFolder, titleReason)
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="group danger-zone">
               <h3>
-                Project <span className="group-sub">Lấy / đẩy code</span>
+                Xóa script <span className="group-sub">Trên Google, không hoàn tác</span>
               </h3>
-              <div className="stack">
-                <div className="row">
-                  <input
-                    className="field"
-                    value={options.versionNumber}
-                    disabled={running}
-                    placeholder="Version (clone, tùy chọn)"
-                    onChange={(e) => onChange({ versionNumber: e.target.value })}
-                  />
-                </div>
-                <div className="group-grid">
-                  <button
-                    className={`btn ${clonePrimary ? 'btn-primary' : ''}`}
-                    disabled={busy || !hasScriptId}
-                    {...previewHandlers(buildCloneArgs())}
-                    onClick={() => onRun(buildCloneArgs())}
-                  >
-                    clone
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={needProject}
-                    {...previewHandlers(['pull'])}
-                    onClick={() => onRun(['pull'])}
-                  >
-                    pull
-                  </button>
-                  <button
-                    className={`btn ${pushPrimary ? 'btn-primary' : ''}`}
-                    disabled={needProject}
-                    {...previewHandlers(buildPushArgs())}
-                    onClick={() => {
-                      const args = buildPushArgs()
-                      onRun(
-                        args,
-                        options.force
-                          ? 'Push với --force có thể ghi đè file remote. Tiếp tục?'
-                          : undefined
-                      )
-                    }}
-                  >
-                    push
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={needProject}
-                    {...previewHandlers(['open-container'])}
-                    onClick={() => onRun(['open-container'])}
-                  >
-                    open-container
-                  </button>
-                  <button
-                    className="btn"
-                    disabled={busy}
-                    {...previewHandlers(['list'])}
-                    onClick={() => onRun(['list'])}
-                  >
-                    list
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    disabled={busy || !hasScriptId}
-                    {...previewHandlers(['delete', options.scriptId.trim(), '--force'])}
-                    onClick={() =>
-                      onRun(
-                        ['delete', options.scriptId.trim(), '--force'],
-                        `Xóa vĩnh viễn script ${options.scriptId.trim()} trên Google?`
-                      )
-                    }
-                  >
-                    delete
-                  </button>
-                </div>
-                <div className="checks">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={options.force}
-                      disabled={running}
-                      onChange={(e) => onChange({ force: e.target.checked })}
-                    />
-                    --force
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={options.watch}
-                      disabled={running}
-                      onChange={(e) => onChange({ watch: e.target.checked })}
-                    />
-                    --watch
-                  </label>
-                </div>
-                <div className="row">
-                  <input
-                    className="field"
-                    value={options.createTitle}
-                    disabled={running}
-                    placeholder="Tiêu đề script mới"
-                    onChange={(e) => onChange({ createTitle: e.target.value })}
-                  />
-                  <select
-                    className="field"
-                    style={{ maxWidth: 140 }}
-                    value={options.createType}
-                    disabled={running}
-                    onChange={(e) => onChange({ createType: e.target.value })}
-                  >
-                    <option value="standalone">standalone</option>
-                    <option value="docs">docs</option>
-                    <option value="sheets">sheets</option>
-                    <option value="slides">slides</option>
-                    <option value="forms">forms</option>
-                    <option value="webapp">webapp</option>
-                    <option value="api">api</option>
-                  </select>
-                  <button
-                    className={`btn ${createPrimary ? 'btn-primary' : ''}`}
-                    disabled={busy || !hasCreateTitle}
-                    {...previewHandlers(buildCreateArgs())}
-                    onClick={() => onRun(buildCreateArgs())}
-                  >
-                    create
-                  </button>
-                </div>
-              </div>
+              <p className="hint group-note">Dùng Script ID ở thanh trên. Không cần .clasp.json.</p>
+              {runButton(
+                'delete',
+                ['delete', scriptId, '--force'],
+                whyDisabled(running, hasFolder, scriptReason),
+                {
+                  danger: true,
+                  confirm: `Xóa vĩnh viễn script ${scriptId || ''} trên Google?`
+                }
+              )}
             </div>
           </>
         )}
 
         {tab === 'deploy' && (
-          <div className="group">
-            <h3>
-              Deploy <span className="group-sub">Phiên bản &amp; triển khai</span>
-            </h3>
-            <div className="stack">
+          <>
+            <div className="group">
+              <h3>
+                Version <span className="group-sub">Phiên bản code</span>
+              </h3>
               <div className="row">
                 <input
                   className="field"
                   value={options.versionDescription}
                   disabled={running}
                   placeholder="Mô tả version"
+                  aria-label="Mô tả version"
                   onChange={(e) => onChange({ versionDescription: e.target.value })}
                 />
-                <button
-                  className="btn"
-                  disabled={needProject}
-                  {...previewHandlers(buildVersionArgs())}
-                  onClick={() => onRun(buildVersionArgs())}
-                >
-                  version
-                </button>
-                <button
-                  className="btn"
-                  disabled={needProject}
-                  {...previewHandlers(['versions'])}
-                  onClick={() => onRun(['versions'])}
-                >
-                  versions
-                </button>
+                {runButton(
+                  'version',
+                  buildVersionArgs(),
+                  whyDisabled(running, hasFolder, projectReason)
+                )}
+                {runButton('versions', ['versions'], whyDisabled(running, hasFolder, projectReason))}
               </div>
+            </div>
+
+            <div className="group">
+              <h3>
+                Deploy mới <span className="group-sub">Không gửi -i</span>
+              </h3>
               <div className="row">
                 <input
                   className="field"
                   value={options.deployDescription}
                   disabled={running}
-                  placeholder="Mô tả deploy"
+                  placeholder="Mô tả deploy (tùy chọn)"
+                  aria-label="Mô tả deploy"
                   onChange={(e) => onChange({ deployDescription: e.target.value })}
                 />
+                {runButton(
+                  'deploy',
+                  buildNewDeployArgs(),
+                  whyDisabled(running, hasFolder, projectReason),
+                  { primary: deployPrimary }
+                )}
+              </div>
+              <p className="hint">Tạo deployment mới. ID cũ không bị gửi kèm.</p>
+            </div>
+
+            <div className="group">
+              <h3>
+                Deployment có sẵn <span className="group-sub">Cần deploymentId</span>
+              </h3>
+              <div className="stack">
                 <input
                   className="field"
                   value={options.deploymentId}
                   disabled={running}
                   placeholder="deploymentId"
+                  aria-label="deploymentId"
                   onChange={(e) => onChange({ deploymentId: e.target.value })}
                 />
-              </div>
-              <div className="group-grid">
-                <button
-                  className={`btn ${deployPrimary ? 'btn-primary' : ''}`}
-                  disabled={needProject}
-                  {...previewHandlers(buildDeployArgs())}
-                  onClick={() => onRun(buildDeployArgs())}
-                >
-                  deploy
-                </button>
-                <button
-                  className="btn btn-danger"
-                  disabled={needProject || !options.deploymentId.trim()}
-                  {...previewHandlers(['undeploy', options.deploymentId.trim()])}
-                  onClick={() =>
-                    onRun(
-                      ['undeploy', options.deploymentId.trim()],
-                      `Xóa deployment ${options.deploymentId.trim()}?`
-                    )
-                  }
-                >
-                  undeploy
-                </button>
-                <button
-                  className="btn"
-                  disabled={needProject}
-                  {...previewHandlers(buildOpenWebAppArgs())}
-                  onClick={() => onRun(buildOpenWebAppArgs())}
-                >
-                  open-web-app
-                </button>
+                <div className="group-grid">
+                  {runButton(
+                    'deploy -i',
+                    buildUpdateDeployArgs(),
+                    whyDisabled(running, hasFolder, projectReason ?? deploymentReason),
+                    { ariaLabel: 'Cập nhật deployment' }
+                  )}
+                  {runButton(
+                    'undeploy',
+                    ['undeploy', options.deploymentId.trim()],
+                    whyDisabled(running, hasFolder, projectReason ?? deploymentReason),
+                    {
+                      danger: true,
+                      confirm: `Gỡ deployment ${options.deploymentId.trim()}?`
+                    }
+                  )}
+                  {runButton(
+                    'open-web-app',
+                    buildOpenWebAppArgs(),
+                    whyDisabled(running, hasFolder, projectReason)
+                  )}
+                </div>
+                <p className="hint">
+                  deploy mới không gửi -i. deploy -i, undeploy và open-web-app dùng ô này.
+                </p>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {tab === 'other' && (
@@ -456,16 +576,14 @@ export function CommandPanel({
                   value={options.functionName}
                   disabled={running}
                   placeholder="Tên function"
+                  aria-label="Tên function"
                   onChange={(e) => onChange({ functionName: e.target.value })}
                 />
-                <button
-                  className="btn"
-                  disabled={needProject || !options.functionName.trim()}
-                  {...previewHandlers(['run', options.functionName.trim()])}
-                  onClick={() => onRun(['run', options.functionName.trim()])}
-                >
-                  run
-                </button>
+                {runButton(
+                  'run',
+                  ['run', options.functionName.trim()],
+                  whyDisabled(running, hasFolder, projectReason ?? functionReason)
+                )}
               </div>
             </div>
 
@@ -479,12 +597,15 @@ export function CommandPanel({
                   rows={3}
                   value={options.customArgs}
                   disabled={running}
-                  placeholder="Ví dụ: push --force   hoặc   delete --force"
+                  placeholder="Ví dụ: pull   hoặc   push --watch"
+                  aria-label="Tham số clasp tùy chỉnh"
                   onChange={(e) => onChange({ customArgs: e.target.value })}
                 />
                 <button
+                  type="button"
                   className="btn"
-                  disabled={busy || !options.customArgs.trim()}
+                  disabled={whyDisabled(running, hasFolder, options.customArgs.trim() ? undefined : 'Nhập tham số') !== undefined}
+                  title={whyDisabled(running, hasFolder, options.customArgs.trim() ? undefined : 'Nhập tham số')}
                   onMouseEnter={() => {
                     const args = buildCustomArgs()
                     setPreview(args.length > 0 ? args : null)
@@ -502,15 +623,16 @@ export function CommandPanel({
                       return
                     }
                     const dangerous =
-                      args[0] === 'delete' ||
-                      args.includes('undeploy') ||
-                      args.includes('--force')
-                    onRun(args, dangerous ? `Chạy lệnh tùy chỉnh: clasp ${raw}?` : undefined)
+                      args[0] === 'delete' || args.includes('undeploy') || args.includes('--force')
+                    onRun(
+                      args,
+                      dangerous ? 'Lệnh này có thể xóa hoặc ghi đè dữ liệu trên Google.' : undefined
+                    )
                   }}
                 >
                   Chạy custom
                 </button>
-                <p className="hint">Nhập args sau `clasp`, ví dụ: `pull` hoặc `push --watch`.</p>
+                <p className="hint">Nhập phần đứng sau clasp, ví dụ pull hoặc push --watch.</p>
               </div>
             </div>
           </>
@@ -518,10 +640,15 @@ export function CommandPanel({
       </div>
 
       <div className="cmd-preview" aria-live="polite">
-        {previewArgs && previewArgs.length > 0 ? (
-          <code>{formatClasp(previewArgs)}</code>
+        {shownArgs && shownArgs.length > 0 ? (
+          <>
+            <span className="hint">{showingHover ? 'Đang trỏ' : 'Sắp chạy'}</span>
+            <code>{formatClasp(shownArgs)}</code>
+          </>
         ) : (
-          <span className="hint">Hover nút lệnh để xem `clasp …` sắp chạy</span>
+          <span className="hint">
+            {hasFolder ? 'Gõ thông tin để thấy lệnh clasp sẽ chạy' : 'Chọn thư mục để bật lệnh'}
+          </span>
         )}
       </div>
     </section>

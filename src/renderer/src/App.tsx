@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ConfirmDialog } from './components/ConfirmDialog'
 import { ContextBar } from './components/ContextBar'
 import { CommandPanel, type CommandOptions } from './components/CommandPanel'
 import { LogConsole, type LogLine } from './components/LogConsole'
-import { extractScriptId } from './utils/scriptId'
+import { extractScriptId, formatClasp } from './utils/scriptId'
 import type {
   AppSettings,
   ClaspAuthUserResult,
@@ -36,6 +37,7 @@ export default function App(): JSX.Element {
   const [running, setRunning] = useState(false)
   const [lines, setLines] = useState<LogLine[]>([])
   const [lastExit, setLastExit] = useState<ClaspExitEvent | null>(null)
+  const [pendingRun, setPendingRun] = useState<{ args: string[]; message: string } | null>(null)
   const [lineId, setLineId] = useState(0)
   const folderRef = useRef(folder)
   folderRef.current = folder
@@ -169,7 +171,20 @@ export default function App(): JSX.Element {
     updateOptions({ scriptId: value })
   }
 
-  const runClasp = async (args: string[], confirmMessage?: string): Promise<void> => {
+  const resolveArgs = (args: string[]): string[] => {
+    const raw = options.scriptId.trim()
+    const scriptId = extractScriptId(options.scriptId)
+    if ((args[0] === 'clone' || args[0] === 'delete') && scriptId) {
+      if (!args[1] || args[1] === raw || args[1] === scriptId) {
+        const next = [...args]
+        next[1] = scriptId
+        return next
+      }
+    }
+    return args
+  }
+
+  const startClasp = async (args: string[]): Promise<void> => {
     if (!folder) {
       appendLog('stderr', 'Chưa chọn thư mục làm việc.\n')
       return
@@ -178,14 +193,10 @@ export default function App(): JSX.Element {
       appendLog('stderr', 'Đang có lệnh chạy. Hãy hủy trước.\n')
       return
     }
-    if (confirmMessage && !window.confirm(confirmMessage)) {
-      return
-    }
 
-    const resolvedArgs = [...args]
+    const resolvedArgs = resolveArgs(args)
     const scriptId = extractScriptId(options.scriptId)
-    if (resolvedArgs[0] === 'clone' && scriptId) {
-      resolvedArgs[1] = scriptId
+    if ((resolvedArgs[0] === 'clone' || resolvedArgs[0] === 'delete') && scriptId) {
       setOptions((prev) => ({ ...prev, scriptId }))
     }
 
@@ -204,9 +215,20 @@ export default function App(): JSX.Element {
     }
   }
 
-  const copyLog = async (): Promise<void> => {
-    const text = lines.map((line) => line.text).join('')
-    await navigator.clipboard.writeText(text)
+  const runClasp = (args: string[], confirmMessage?: string): void => {
+    if (!folder) {
+      appendLog('stderr', 'Chưa chọn thư mục làm việc.\n')
+      return
+    }
+    if (running) {
+      appendLog('stderr', 'Đang có lệnh chạy. Hãy hủy trước.\n')
+      return
+    }
+    if (confirmMessage) {
+      setPendingRun({ args, message: confirmMessage })
+      return
+    }
+    void startClasp(args)
   }
 
   const recentFolders = useMemo(() => settings?.recentFolders ?? [], [settings])
@@ -261,7 +283,7 @@ export default function App(): JSX.Element {
           options={options}
           authUser={authUser}
           onChange={updateOptions}
-          onRun={(args, confirmMessage) => void runClasp(args, confirmMessage)}
+          onRun={(args, confirmMessage) => runClasp(args, confirmMessage)}
         />
         <LogConsole
           lines={lines}
@@ -271,10 +293,23 @@ export default function App(): JSX.Element {
             setLines([])
             setLastExit(null)
           }}
-          onCopy={() => void copyLog()}
           onCancel={() => void window.api.cancelClasp()}
         />
       </div>
+      {pendingRun && (
+        <ConfirmDialog
+          title="Xác nhận lệnh"
+          message={pendingRun.message}
+          command={formatClasp(resolveArgs(pendingRun.args))}
+          confirmLabel={pendingRun.args[0] === 'delete' ? 'Xóa script' : 'Chạy'}
+          onCancel={() => setPendingRun(null)}
+          onConfirm={() => {
+            const args = pendingRun.args
+            setPendingRun(null)
+            void startClasp(args)
+          }}
+        />
+      )}
     </div>
   )
 }
